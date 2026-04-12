@@ -1,0 +1,75 @@
+# -----------------------------
+# SmartShip.Logistics - Git Ignore
+# -----------------------------
+
+# Build output
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ebug/
+**/[Rr]elease/
+
+# .NET user/local files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.slnLaunch.user
+*.csproj.user
+
+# IDE/editor folders
+.vs/
+.vscode/
+.idea/
+
+# Logs and temporary runtime files
+*.log
+*.tmp
+*.temp
+Backend/logs/
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Test and coverage outputs
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet and package artifacts
+*.nupkg
+*.snupkg
+artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Secrets / credentials
+# -----------------------------
+
+# .NET secret storage and local config overrides
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Certificates, keys, and sensitive files
+*.pfx
+*.p12
+*.pem
+*.key
+*.jwk
+*.kdbx
+secrets.json
+
+# Keep production-safe appsettings tracked
+!**/appsettings.json
