@@ -1,0 +1,56 @@
+<div class="admin-shipments">
+  <h1 class="page-title">Shipments</h1>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <label for="statusFilter">Status:</label>
+    <select id="statusFilter" [(ngModel)]="statusFilter" class="filter-select">
+      <option *ngFor="let s of statuses" [value]="s">{{ s || 'All' }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <table *ngIf="!isLoading" class="data-table">
+    <thead>
+      <tr>
+        <th>Tracking #</th>
+        <th>Sender</th>
+        <th>Receiver</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of filteredShipments">
+        <td><a [routerLink]="['/admin/shipments', s.id]">{{ s.trackingNumber }}</a></td>
+        <td>{{ s.senderAddress?.name ?? s.sender }}</td>
+        <td>{{ s.receiverAddress?.name ?? s.receiver }}</td>
+        <td><span class="badge">{{ s.status }}</span></td>
+        <td>{{ s.createdAt | date:'short' }}</td>
+        <td>
+          <select class="action-select" (change)="updateStatus(s.id, $any($event.target).value); $any($event.target).value = ''">
+            <option value="">Action</option>
+            <option value="pickup">Mark Picked Up</option>
+            <option value="in-transit">Mark In Transit</option>
+            <option value="out-for-delivery">Mark Out for Delivery</option>
+            <option value="delivered">Mark Delivered</option>
+            <option value="delay">Mark Delayed</option>
+            <option value="return">Mark Returned</option>
+          </select>
+        </td>
+      </tr>
+      <tr *ngIf="filteredShipments.length === 0">
+        <td colspan="6" class="empty">No shipments found.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="!isLoading">
+    <button (click)="prevPage()" [disabled]="page === 1">Previous</button>
+    <span>Page {{ page }} of {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="page === totalPages">Next</button>
+  </div>
+</div>

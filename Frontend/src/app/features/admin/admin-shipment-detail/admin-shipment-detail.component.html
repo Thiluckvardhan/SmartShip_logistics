@@ -1,0 +1,47 @@
+<div class="shipment-detail">
+  <a routerLink="/admin/shipments" class="back-link">← Back to Shipments</a>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <div *ngIf="!isLoading && shipment">
+    <h1 class="page-title">Shipment {{ shipment.trackingNumber }}</h1>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h2>Shipment Info</h2>
+        <div class="detail-row"><span>Status</span><span class="badge">{{ shipment.status }}</span></div>
+        <div class="detail-row"><span>Tracking #</span><span>{{ shipment.trackingNumber }}</span></div>
+        <div class="detail-row"><span>Created</span><span>{{ shipment.createdAt | date:'medium' }}</span></div>
+      </div>
+
+      <div class="detail-card" *ngIf="shipment.senderAddress">
+        <h2>Sender</h2>
+        <div class="detail-row"><span>Name</span><span>{{ shipment.senderAddress.name }}</span></div>
+        <div class="detail-row"><span>Phone</span><span>{{ shipment.senderAddress.phone }}</span></div>
+        <div class="detail-row"><span>Address</span><span>{{ shipment.senderAddress.street }}, {{ shipment.senderAddress.city }}</span></div>
+      </div>
+
+      <div class="detail-card" *ngIf="shipment.receiverAddress">
+        <h2>Receiver</h2>
+        <div class="detail-row"><span>Name</span><span>{{ shipment.receiverAddress.name }}</span></div>
+        <div class="detail-row"><span>Phone</span><span>{{ shipment.receiverAddress.phone }}</span></div>
+        <div class="detail-row"><span>Address</span><span>{{ shipment.receiverAddress.street }}, {{ shipment.receiverAddress.city }}</span></div>
+      </div>
+    </div>
+
+    <!-- Status Action Buttons -->
+    <div class="actions-section">
+      <h2>Update Status</h2>
+      <div class="action-buttons">
+        <button class="btn btn-secondary" (click)="action('pickup')">Picked Up</button>
+        <button class="btn btn-secondary" (click)="action('in-transit')">In Transit</button>
+        <button class="btn btn-secondary" (click)="action('out-for-delivery')">Out for Delivery</button>
+        <button class="btn btn-success" (click)="action('delivered')">Delivered</button>
+        <button class="btn btn-warning" (click)="action('delay')">Delay</button>
+        <button class="btn btn-danger" (click)="action('return')">Return</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && !shipment" class="empty">Shipment not found.</div>
+</div>

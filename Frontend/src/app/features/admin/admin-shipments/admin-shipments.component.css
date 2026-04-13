@@ -1,0 +1,14 @@
+.admin-shipments { padding: 24px; }
+.page-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 24px; }
+.filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.filter-select, .action-select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; }
+.loading { text-align: center; padding: 48px; color: var(--text-secondary); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--surface); border-radius: 8px; overflow: hidden; }
+.data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table th { font-weight: 600; color: var(--text-secondary); background: var(--background); }
+.data-table a { color: var(--primary); text-decoration: none; }
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 500; background: var(--border); }
+.empty { text-align: center; color: var(--text-secondary); padding: 24px; }
+.pagination { display: flex; align-items: center; gap: 16px; justify-content: center; margin-top: 20px; }
+.pagination button { padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--surface); }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }

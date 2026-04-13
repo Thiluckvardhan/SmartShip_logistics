@@ -22,7 +22,10 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
     [HttpGet("/api/shipments/{id:guid}")]
     public async Task<IActionResult> GetShipment(Guid id)
     {
-        var item = await shipmentService.GetShipmentAsync(id);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var item = await shipmentService.GetShipmentAsync(id, userId, User.IsInRole("Admin"));
         return item is null ? NotFound() : Ok(item);
     }
 
@@ -37,7 +40,10 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
     [HttpGet("/api/shipments/track/{trackingNumber}")]
     public async Task<IActionResult> GetByTrackingNumber(string trackingNumber)
     {
-        var item = await shipmentService.GetShipmentByTrackingNumberAsync(trackingNumber);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var item = await shipmentService.GetShipmentByTrackingNumberAsync(trackingNumber, userId, User.IsInRole("Admin"));
         return item is null ? NotFound() : Ok(item);
     }
 
@@ -47,7 +53,10 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
         if (request.Items is null || request.Items.Count == 0)
             return BadRequest(new { message = "At least one package item is required." });
 
-        var updated = await shipmentService.UpdateShipmentAsync(id, request);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var updated = await shipmentService.UpdateShipmentAsync(id, request, userId, User.IsInRole("Admin"));
         return updated is null
             ? NotFound(new { message = "Shipment not found." })
             : Ok(updated);
@@ -109,24 +118,40 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
     [HttpPost("/api/shipments/{id:guid}/packages")]
     public async Task<IActionResult> CreatePackage(Guid id, [FromBody] CreatePackageDto request)
     {
-        var item = await shipmentService.CreatePackageAsync(id, request);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var item = await shipmentService.CreatePackageAsync(id, request, userId, User.IsInRole("Admin"));
         return item is null ? BadRequest(new { message = "Shipment not found." }) : Ok(item);
     }
 
     [HttpGet("/api/shipments/{id:guid}/packages")]
-    public async Task<IActionResult> GetPackages(Guid id) => Ok(await shipmentService.GetPackagesByShipmentAsync(id));
+    public async Task<IActionResult> GetPackages(Guid id)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var items = await shipmentService.GetPackagesByShipmentAsync(id, userId, User.IsInRole("Admin"));
+        return items is null ? NotFound() : Ok(items);
+    }
 
     [HttpPut("/api/shipments/{id:guid}/packages/{packageId:guid}")]
     public async Task<IActionResult> UpdatePackage(Guid id, Guid packageId, [FromBody] UpdatePackageDto request)
     {
-        var item = await shipmentService.UpdatePackageAsync(id, packageId, request);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var item = await shipmentService.UpdatePackageAsync(id, packageId, request, userId, User.IsInRole("Admin"));
         return item is null ? NotFound(new { message = "Shipment or package not found." }) : Ok(item);
     }
 
     [HttpDelete("/api/shipments/{id:guid}/packages/{packageId:guid}")]
     public async Task<IActionResult> DeletePackage(Guid id, Guid packageId)
     {
-        var result = await shipmentService.DeletePackageAsync(id, packageId);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var result = await shipmentService.DeletePackageAsync(id, packageId, userId, User.IsInRole("Admin"));
         if (result.Ok) return Ok(new { message = "Package deleted successfully.", shipmentId = id, packageId });
 
         return result.Message switch

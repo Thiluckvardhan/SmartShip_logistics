@@ -1,0 +1,70 @@
+<div class="admin-dashboard">
+  <h1 class="page-title">Admin Dashboard</h1>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <div *ngIf="!isLoading">
+    <!-- KPI Cards -->
+    <div class="stats-grid" *ngIf="statistics">
+      <div class="stat-card">
+        <div class="stat-label">Total Shipments</div>
+        <div class="stat-value">{{ statistics.totalShipments ?? 0 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Hubs</div>
+        <div class="stat-value">{{ statistics.activeHubs ?? 0 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Exceptions</div>
+        <div class="stat-value">{{ statistics.pendingExceptions ?? 0 }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">{{ statistics.totalUsers ?? 0 }}</div>
+      </div>
+    </div>
+
+    <!-- Recent Data Tables -->
+    <div class="tables-section" *ngIf="dashboard">
+      <div class="table-card" *ngIf="dashboard.recentShipments?.length">
+        <h2>Recent Shipments</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tracking #</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of dashboard.recentShipments">
+              <td>{{ s.trackingNumber }}</td>
+              <td><span class="badge badge-{{ s.status | lowercase }}">{{ s.status }}</span></td>
+              <td>{{ s.createdAt | date:'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-card" *ngIf="dashboard.recentExceptions?.length">
+        <h2>Recent Exceptions</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Shipment</th>
+              <th>Reason</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of dashboard.recentExceptions">
+              <td>{{ e.trackingNumber }}</td>
+              <td>{{ e.reason }}</td>
+              <td>{{ e.createdAt | date:'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

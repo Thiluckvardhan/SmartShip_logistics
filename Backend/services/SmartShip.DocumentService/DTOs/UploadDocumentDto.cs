@@ -26,8 +26,7 @@ public class UpdateDocumentDto
     [Required(ErrorMessage = "Shipment ID is required.")]
     public Guid ShipmentId { get; set; }
 
-    [Required(ErrorMessage = "File is required.")]
-    public IFormFile File { get; set; } = default!;
+    public IFormFile? File { get; set; }
 }
 
 public class CreateDeliveryProofDto

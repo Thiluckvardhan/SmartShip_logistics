@@ -39,6 +39,28 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         }
     }
 
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto request)
+    {
+        try
+        {
+            var result = await authService.LoginWithGoogleAsync(request);
+            if (result.Ok)
+            {
+                logger.LogInformation("Google login succeeded. CorrelationId: {CorrelationId}", HttpContext.TraceIdentifier);
+                return Ok(result.Data);
+            }
+
+            logger.LogWarning("Google login failed. CorrelationId: {CorrelationId}", HttpContext.TraceIdentifier);
+            return Unauthorized(new { message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Google login error. CorrelationId: {CorrelationId}", HttpContext.TraceIdentifier);
+            throw;
+        }
+    }
+
     [HttpPost("refresh-token")]
     public async Task<IActionResult> Refresh([FromBody] TokenDto request)
     {

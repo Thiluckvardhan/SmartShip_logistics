@@ -1,0 +1,96 @@
+<div class="documents-page">
+  <h1 class="page-title">Documents</h1>
+
+  <!-- Upload section -->
+  <div class="upload-card">
+    <h2 class="card-title">Upload Document</h2>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="shipmentSelect">Shipment</label>
+        <select
+          id="shipmentSelect"
+          [(ngModel)]="selectedShipmentId"
+          (change)="loadDocuments(selectedShipmentId)"
+          class="form-control"
+        >
+          <option value="">-- Select a shipment --</option>
+          <option *ngFor="let s of shipments" [value]="s.id">
+            {{ s.trackingNumber ?? s.id }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="docTypeSelect">Document Type</label>
+        <select id="docTypeSelect" [(ngModel)]="selectedDocType" class="form-control">
+          <option *ngFor="let t of docTypes" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fileInput">File <span class="hint">(PDF, PNG, JPG/JPEG — max 10 MB)</span></label>
+        <input
+          type="file"
+          id="fileInput"
+          accept=".pdf,.png,.jpg,.jpeg"
+          (change)="onFileChange($event)"
+          class="form-control"
+        />
+        <span class="field-error" *ngIf="fileError">{{ fileError }}</span>
+      </div>
+    </div>
+
+    <button
+      class="btn-primary"
+      (click)="onUpload()"
+      [disabled]="!selectedShipmentId || !selectedFile || !!fileError || isUploading"
+    >
+      {{ isUploading ? 'Uploading...' : 'Upload' }}
+    </button>
+  </div>
+
+  <!-- Documents table -->
+  <div class="table-card" *ngIf="selectedShipmentId">
+    <h2 class="card-title">Documents for Selected Shipment</h2>
+
+    <div class="table-wrapper" *ngIf="documents.length > 0; else emptyDocs">
+      <table class="docs-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Uploaded</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doc of documents">
+            <td>{{ doc.fileName ?? doc.name ?? '—' }}</td>
+            <td>{{ doc.documentType ?? doc.type ?? '—' }}</td>
+            <td>{{ (doc.uploadedAt ?? doc.createdAt) | date:'mediumDate' }}</td>
+            <td>
+              <button class="btn-danger-sm" (click)="deleteDocument(doc.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyDocs>
+      <p class="empty-msg">No documents found for this shipment.</p>
+    </ng-template>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+      <button
+        class="page-btn"
+        *ngFor="let p of pages"
+        [class.active]="p === currentPage"
+        (click)="goToPage(p)"
+      >{{ p }}</button>
+      <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+    </div>
+  </div>
+</div>

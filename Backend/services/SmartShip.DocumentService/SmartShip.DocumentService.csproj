@@ -28,4 +28,8 @@
     <ProjectReference Include="..\..\shared\SmartShip.Contracts\SmartShip.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Storage\" />
+  </ItemGroup>
+
 </Project>

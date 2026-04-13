@@ -9,6 +9,7 @@ public class ShipmentDbContext(DbContextOptions<ShipmentDbContext> options) : Db
     public DbSet<Address> Addresses => Set<Address>();
     public DbSet<Package> Packages => Set<Package>();
     public DbSet<PickupSchedule> PickupSchedules => Set<PickupSchedule>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +125,34 @@ public class ShipmentDbContext(DbContextOptions<ShipmentDbContext> options) : Db
                 .WithMany(x => x.PickupSchedules)
                 .HasForeignKey(x => x.ShipmentId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.EventType)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(x => x.Payload)
+                .IsRequired();
+
+            entity.Property(x => x.CreatedAt)
+                .IsRequired();
+
+            entity.Property(x => x.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(x => x.AttemptCount)
+                .IsRequired();
+
+            entity.Property(x => x.LastError)
+                .HasMaxLength(2000);
+
+            entity.HasIndex(x => x.ProcessedAt);
+            entity.HasIndex(x => x.Status);
         });
 
         base.OnModelCreating(modelBuilder);

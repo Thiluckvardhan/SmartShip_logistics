@@ -21,9 +21,20 @@ public class DocumentRepository(DocumentDbContext dbContext) : IDocumentReposito
     public Task<int> GetDocumentsCountByShipmentAsync(Guid shipmentId) =>
         dbContext.Documents.CountAsync(x => x.ShipmentId == shipmentId);
 
+    public Task<int> GetDocumentsCountByShipmentAndCustomerAsync(Guid shipmentId, Guid customerId) =>
+        dbContext.Documents.CountAsync(x => x.ShipmentId == shipmentId && x.CustomerId == customerId);
+
     public Task<List<Document>> GetDocumentsByShipmentPagedAsync(Guid shipmentId, int pageNumber, int pageSize) =>
         dbContext.Documents
             .Where(x => x.ShipmentId == shipmentId)
+            .OrderByDescending(x => x.UploadedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+    public Task<List<Document>> GetDocumentsByShipmentAndCustomerPagedAsync(Guid shipmentId, Guid customerId, int pageNumber, int pageSize) =>
+        dbContext.Documents
+            .Where(x => x.ShipmentId == shipmentId && x.CustomerId == customerId)
             .OrderByDescending(x => x.UploadedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)

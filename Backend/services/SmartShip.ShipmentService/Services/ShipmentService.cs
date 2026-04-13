@@ -2,11 +2,11 @@ using SmartShip.ShipmentService.DTOs;
 using SmartShip.ShipmentService.Models;
 using SmartShip.ShipmentService.Repositories;
 using SmartShip.Contracts.Events;
-using SmartShip.Core.Messaging;
+using System.Text.Json;
 
 namespace SmartShip.ShipmentService.Services;
 
-public class ShipmentService(IShipmentRepository repository, IEventBus eventBus) : IShipmentService
+public class ShipmentService(IShipmentRepository repository) : IShipmentService
 {
     private const decimal DomesticRateMultiplier = 10.0m;
 
@@ -87,15 +87,15 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
             });
         }
 
-        await repository.SaveChangesAsync();
-
-        eventBus.Publish(new ShipmentCreatedEvent
+        await QueueOutboxEventAsync(new ShipmentCreatedEvent
         {
             ShipmentId = shipment.ShipmentId,
             TrackingNumber = shipment.TrackingNumber,
             CustomerId = shipment.CustomerId,
             Weight = shipment.TotalWeight
         });
+
+        await repository.SaveChangesAsync();
 
         return new
         {
@@ -112,16 +112,22 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
         };
     }
 
-    public async Task<object?> GetShipmentAsync(Guid id)
+    public async Task<object?> GetShipmentAsync(Guid id, Guid requesterId, bool isAdmin)
     {
         var s = await repository.GetShipmentAsync(id);
-        return s is null ? null : MapShipment(s);
+        if (s is null) return null;
+        if (!CanAccessShipment(s, requesterId, isAdmin)) return null;
+
+        return MapShipment(s);
     }
 
-    public async Task<object?> GetShipmentByTrackingNumberAsync(string trackingNumber)
+    public async Task<object?> GetShipmentByTrackingNumberAsync(string trackingNumber, Guid requesterId, bool isAdmin)
     {
         var s = await repository.GetShipmentByTrackingNumberAsync(trackingNumber);
-        return s is null ? null : MapShipment(s);
+        if (s is null) return null;
+        if (!CanAccessShipment(s, requesterId, isAdmin)) return null;
+
+        return MapShipment(s);
     }
 
     public async Task<List<object>> GetMyShipmentsAsync(Guid customerId)
@@ -133,7 +139,10 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
     public async Task<List<object>> GetAllShipmentsAsync()
     {
         var items = await repository.GetAllShipmentsAsync();
-        return items.Select(MapShipment).ToList();
+        return items
+            .Where(x => x.Status != ShipmentStatus.Draft)
+            .Select(MapShipment)
+            .ToList();
     }
 
     public async Task<(bool Ok, string? Message, object? Data)> BookShipmentAsync(Guid id, Guid customerId)
@@ -147,10 +156,11 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
         return await UpdateShipmentStatusAsync(id, ShipmentStatus.Booked);
     }
 
-    public async Task<object?> UpdateShipmentAsync(Guid id, UpdateShipmentDto request)
+    public async Task<object?> UpdateShipmentAsync(Guid id, UpdateShipmentDto request, Guid requesterId, bool isAdmin)
     {
         var shipment = await repository.GetShipmentAsync(id);
         if (shipment is null) return null;
+        if (!CanAccessShipment(shipment, requesterId, isAdmin)) return null;
 
         var items = request.Items ?? [];
         if (items.Count == 0) return MapShipment(shipment);
@@ -202,7 +212,7 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
 
         if (newStatus is ShipmentStatus.Booked or ShipmentStatus.PickedUp)
         {
-            eventBus.Publish(new ShipmentBookedEvent
+            await QueueOutboxEventAsync(new ShipmentBookedEvent
             {
                 ShipmentId = shipment.ShipmentId,
                 TrackingNumber = shipment.TrackingNumber,
@@ -212,7 +222,7 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
 
         if (newStatus == ShipmentStatus.Delivered)
         {
-            eventBus.Publish(new ShipmentDeliveredEvent
+            await QueueOutboxEventAsync(new ShipmentDeliveredEvent
             {
                 ShipmentId = shipment.ShipmentId,
                 TrackingNumber = shipment.TrackingNumber
@@ -221,7 +231,7 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
 
         if (newStatus is ShipmentStatus.Delayed or ShipmentStatus.Failed or ShipmentStatus.Returned)
         {
-            eventBus.Publish(new TrackingUpdatedEvent
+            await QueueOutboxEventAsync(new TrackingUpdatedEvent
             {
                 ShipmentId = shipment.ShipmentId,
                 TrackingNumber = shipment.TrackingNumber,
@@ -303,10 +313,11 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
 
     public Task<object?> GetAddressAsync(Guid id) => repository.GetAddressAsync(id).ContinueWith(t => (object?)t.Result);
 
-    public async Task<object?> CreatePackageAsync(Guid shipmentId, CreatePackageDto request)
+    public async Task<object?> CreatePackageAsync(Guid shipmentId, CreatePackageDto request, Guid requesterId, bool isAdmin)
     {
         var shipment = await repository.GetShipmentAsync(shipmentId);
         if (shipment is null) return null;
+        if (!CanAccessShipment(shipment, requesterId, isAdmin)) return null;
 
         var quantity = request.Quantity.GetValueOrDefault(1) <= 0 ? 1 : request.Quantity.GetValueOrDefault(1);
 
@@ -332,10 +343,11 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
         return package;
     }
 
-    public async Task<object?> UpdatePackageAsync(Guid shipmentId, Guid packageId, UpdatePackageDto request)
+    public async Task<object?> UpdatePackageAsync(Guid shipmentId, Guid packageId, UpdatePackageDto request, Guid requesterId, bool isAdmin)
     {
         var shipment = await repository.GetShipmentAsync(shipmentId);
         if (shipment is null) return null;
+        if (!CanAccessShipment(shipment, requesterId, isAdmin)) return null;
 
         var package = await repository.GetPackageAsync(shipmentId, packageId);
         if (package is null) return null;
@@ -363,10 +375,11 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
         return package;
     }
 
-    public async Task<(bool Ok, string? Message)> DeletePackageAsync(Guid shipmentId, Guid packageId)
+    public async Task<(bool Ok, string? Message)> DeletePackageAsync(Guid shipmentId, Guid packageId, Guid requesterId, bool isAdmin)
     {
         var shipment = await repository.GetShipmentAsync(shipmentId);
         if (shipment is null) return (false, "Shipment not found.");
+        if (!CanAccessShipment(shipment, requesterId, isAdmin)) return (false, "You can modify only your own shipments.");
 
         var package = await repository.GetPackageAsync(shipmentId, packageId);
         if (package is null) return (false, "Package not found.");
@@ -381,8 +394,12 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
         return (true, null);
     }
 
-    public async Task<List<object>> GetPackagesByShipmentAsync(Guid shipmentId)
+    public async Task<List<object>?> GetPackagesByShipmentAsync(Guid shipmentId, Guid requesterId, bool isAdmin)
     {
+        var shipment = await repository.GetShipmentAsync(shipmentId);
+        if (shipment is null) return null;
+        if (!CanAccessShipment(shipment, requesterId, isAdmin)) return null;
+
         var items = await repository.GetPackagesByShipmentAsync(shipmentId);
         return items.Select(x => (object)x).ToList();
     }
@@ -508,4 +525,26 @@ public class ShipmentService(IShipmentRepository repository, IEventBus eventBus)
             ps.Notes
         }).ToList()
     };
+
+    private static bool CanAccessShipment(Shipment shipment, Guid requesterId, bool isAdmin)
+    {
+        if (isAdmin)
+        {
+            return shipment.Status != ShipmentStatus.Draft;
+        }
+
+        return shipment.CustomerId == requesterId;
+    }
+
+    private async Task QueueOutboxEventAsync(IntegrationEvent @event)
+    {
+        await repository.AddOutboxMessageAsync(new OutboxMessage
+        {
+            EventType = @event.GetType().AssemblyQualifiedName ?? @event.GetType().FullName ?? @event.GetType().Name,
+            Payload = JsonSerializer.Serialize((object)@event, @event.GetType()),
+            CreatedAt = DateTime.UtcNow,
+            Status = "Pending",
+            AttemptCount = 0
+        });
+    }
 }

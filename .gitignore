@@ -7,6 +7,7 @@
 **/[Oo]bj/
 **/[Dd]ebug/
 **/[Rr]elease/
+**/[Oo]ut/
 
 # .NET user/local files
 *.user

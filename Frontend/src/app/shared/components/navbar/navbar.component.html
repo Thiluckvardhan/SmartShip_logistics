@@ -1,0 +1,28 @@
+<header class="navbar">
+  <div class="navbar-container">
+    <a class="navbar-logo" routerLink="/dashboard">SmartShip</a>
+
+    <button class="hamburger" (click)="toggleMenu()" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="navbar-nav" [class.open]="menuOpen">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+      <a routerLink="/shipments" routerLinkActive="active" class="nav-link">Shipments</a>
+      <a routerLink="/tracking" routerLinkActive="active" class="nav-link">Tracking</a>
+      <a routerLink="/documents" routerLinkActive="active" class="nav-link">Documents</a>
+      <a *ngIf="isAdmin()" routerLink="/admin" routerLinkActive="active" class="nav-link admin-link">Admin</a>
+    </nav>
+
+    <div class="navbar-actions">
+      <ng-container *ngIf="isLoggedIn(); else guestLinks">
+        <span class="user-name" *ngIf="currentUser$ | async as user">{{ user.name }}</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </ng-container>
+      <ng-template #guestLinks>
+        <a routerLink="/login" class="btn-link">Login</a>
+        <a routerLink="/register" class="btn-primary">Register</a>
+      </ng-template>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,66 @@
+<section class="hero">
+  <div class="hero-content">
+    <h1>Track Your Shipment</h1>
+    <p>Enter your tracking number to get real-time updates on your shipment.</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSearch()" class="search-form">
+      <div class="search-row">
+        <input
+          type="text"
+          formControlName="trackingNumber"
+          placeholder="Enter tracking number"
+          class="search-input"
+          [class.input-error]="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
+        />
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || isLoading">
+          {{ isLoading ? 'Searching...' : 'Search' }}
+        </button>
+      </div>
+      <span
+        class="field-error"
+        *ngIf="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
+      >
+        Tracking number is required.
+      </span>
+    </form>
+  </div>
+</section>
+
+<section class="result-section" *ngIf="trackingResult">
+  <div class="result-card">
+    <div class="result-header">
+      <h2>Tracking Result</h2>
+      <span class="status-badge">{{ trackingResult.status }}</span>
+    </div>
+
+    <div class="result-details">
+      <div class="detail-row">
+        <span class="label">Tracking Number</span>
+        <span class="value">{{ trackingResult.trackingNumber }}</span>
+      </div>
+      <div class="detail-row" *ngIf="trackingResult.currentLocation">
+        <span class="label">Current Location</span>
+        <span class="value">{{ trackingResult.currentLocation }}</span>
+      </div>
+      <div class="detail-row" *ngIf="trackingResult.estimatedDelivery">
+        <span class="label">Estimated Delivery</span>
+        <span class="value">{{ trackingResult.estimatedDelivery | date:'mediumDate' }}</span>
+      </div>
+    </div>
+
+    <div class="timeline" *ngIf="trackingResult.events?.length">
+      <h3>Timeline</h3>
+      <ul class="timeline-list">
+        <li class="timeline-item" *ngFor="let event of trackingResult.events">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <span class="event-status">{{ event.status }}</span>
+            <span class="event-location" *ngIf="event.location">{{ event.location }}</span>
+            <span class="event-time">{{ event.timestamp | date:'medium' }}</span>
+            <p class="event-desc" *ngIf="event.description">{{ event.description }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>

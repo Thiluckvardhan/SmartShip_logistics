@@ -5,6 +5,7 @@ namespace SmartShip.IdentityService.DTOs;
 public record RegisterDto(
     [Required(ErrorMessage = "Name is required.")]
     [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters.")]
+    [RegularExpression("^[A-Za-z\\s]+$", ErrorMessage = "Name can contain only letters and spaces.")]
     string Name,
 
     [Required(ErrorMessage = "Email is required.")]
@@ -22,6 +23,7 @@ public record RegisterDto(
 
 public record UpdateUserDto(
     [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters.")]
+    [RegularExpression("^[A-Za-z\\s]+$", ErrorMessage = "Name can contain only letters and spaces.")]
     string? Name,
 
     [Phone(ErrorMessage = "Invalid phone number format.")]

@@ -1,0 +1,26 @@
+.exceptions { padding: 24px; }
+.page-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 24px; }
+.loading { text-align: center; padding: 48px; color: var(--text-secondary); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--surface); border-radius: 8px; }
+.data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table th { font-weight: 600; color: var(--text-secondary); background: var(--background); }
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; background: var(--border); }
+.actions { display: flex; gap: 8px; }
+.btn { padding: 5px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.empty { text-align: center; color: var(--text-secondary); padding: 24px; }
+.pagination { display: flex; align-items: center; gap: 16px; justify-content: center; margin-top: 20px; }
+.pagination button { padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--surface); }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: var(--surface); border-radius: 10px; padding: 28px; width: 100%; max-width: 480px; }
+.modal h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group label { font-size: 0.9rem; font-weight: 500; }
+.form-control { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; resize: vertical; }
+.error { color: var(--danger); font-size: 0.8rem; }
+.modal-actions { display: flex; gap: 12px; margin-top: 8px; }

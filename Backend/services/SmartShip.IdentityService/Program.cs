@@ -38,8 +38,8 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "SmartShip.SuperSecret.Key.For.Dev.Only.2026";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SmartShip";
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Missing configuration: Jwt:Key");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing configuration: Jwt:Issuer");
 var jwtAudiences = GetJwtAudiences(builder.Configuration);
 
 builder.Services.AddControllers()

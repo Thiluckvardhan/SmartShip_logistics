@@ -56,10 +56,15 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         };
     }
 
-    public async Task<object> GetDocumentsAsync(Guid shipmentId, int pageNumber, int pageSize)
+    public async Task<object> GetDocumentsAsync(Guid shipmentId, int pageNumber, int pageSize, Guid requesterId, bool isAdmin)
     {
-        var totalCount = await repository.GetDocumentsCountByShipmentAsync(shipmentId);
-        var items = await repository.GetDocumentsByShipmentPagedAsync(shipmentId, pageNumber, pageSize);
+        var totalCount = isAdmin
+            ? await repository.GetDocumentsCountByShipmentAsync(shipmentId)
+            : await repository.GetDocumentsCountByShipmentAndCustomerAsync(shipmentId, requesterId);
+
+        var items = isAdmin
+            ? await repository.GetDocumentsByShipmentPagedAsync(shipmentId, pageNumber, pageSize)
+            : await repository.GetDocumentsByShipmentAndCustomerPagedAsync(shipmentId, requesterId, pageNumber, pageSize);
 
         return new
         {
@@ -94,9 +99,14 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         }).ToList();
     }
 
-    public async Task<object?> GetDocumentAsync(Guid id)
+    public async Task<object?> GetDocumentAsync(Guid id, Guid requesterId, bool isAdmin)
     {
         var x = await repository.GetDocumentAsync(id);
+        if (x is not null && !isAdmin && x.CustomerId != requesterId)
+        {
+            return null;
+        }
+
         return x is null ? null : new
         {
             x.DocumentId,
@@ -109,10 +119,11 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         };
     }
 
-    public async Task<object?> UpdateDocumentAsync(Guid id, Guid shipmentId, IFormFile file, string contentRootPath)
+    public async Task<object?> UpdateDocumentAsync(Guid id, Guid shipmentId, IFormFile? file, string contentRootPath, Guid requesterId, bool isAdmin)
     {
         var doc = await repository.GetDocumentAsync(id);
         if (doc is null) return null;
+        if (!isAdmin && doc.CustomerId != requesterId) return null;
 
         doc.ShipmentId = shipmentId;
 
@@ -153,10 +164,11 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         };
     }
 
-    public async Task<bool> DeleteDocumentAsync(Guid id)
+    public async Task<bool> DeleteDocumentAsync(Guid id, Guid requesterId, bool isAdmin)
     {
         var doc = await repository.GetDocumentAsync(id);
         if (doc is null) return false;
+        if (!isAdmin && doc.CustomerId != requesterId) return false;
 
         if (File.Exists(doc.FilePath)) File.Delete(doc.FilePath);
         await repository.DeleteDocumentAsync(doc);
@@ -164,9 +176,15 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         return true;
     }
 
-    public async Task<object?> CreateDeliveryProofAsync(Guid shipmentId, string signerName, string? notes, IFormFile file, string contentRootPath)
+    public async Task<object?> CreateDeliveryProofAsync(Guid shipmentId, string signerName, string? notes, IFormFile file, string contentRootPath, Guid requesterId, bool isAdmin)
     {
         if (file.Length == 0 || file.Length > MaxFileSize) return null;
+
+        if (!isAdmin)
+        {
+            var customerDocs = await repository.GetDocumentsByShipmentAndCustomerPagedAsync(shipmentId, requesterId, 1, 1);
+            if (customerDocs.Count == 0) return null;
+        }
 
         var uploadsRoot = Path.Combine(contentRootPath, "uploads", "delivery-proof");
         Directory.CreateDirectory(uploadsRoot);
@@ -201,8 +219,14 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         };
     }
 
-    public async Task<object?> GetDeliveryProofAsync(Guid shipmentId)
+    public async Task<object?> GetDeliveryProofAsync(Guid shipmentId, Guid requesterId, bool isAdmin)
     {
+        if (!isAdmin)
+        {
+            var customerDocs = await repository.GetDocumentsByShipmentAndCustomerPagedAsync(shipmentId, requesterId, 1, 1);
+            if (customerDocs.Count == 0) return new List<object>();
+        }
+
         var items = await repository.GetDeliveryProofsByShipmentAsync(shipmentId);
         return items.Select(x => new
         {

@@ -1,0 +1,78 @@
+<div class="pickups">
+  <div class="page-header">
+    <h1 class="page-title">Pickups</h1>
+    <button class="btn btn-primary" (click)="openCreate()" *ngIf="!showCreateForm">+ Schedule Pickup</button>
+  </div>
+
+  <!-- Create Form -->
+  <div class="form-card" *ngIf="showCreateForm">
+    <h2>Schedule Pickup</h2>
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
+      <div class="form-group">
+        <label>Shipment ID</label>
+        <input formControlName="shipmentId" class="form-control" placeholder="Shipment ID" />
+        <div class="error" *ngIf="createForm.get('shipmentId')?.invalid && createForm.get('shipmentId')?.touched">Shipment ID is required</div>
+      </div>
+      <div class="form-group">
+        <label>Pickup Date & Time</label>
+        <input formControlName="pickupDate" type="datetime-local" class="form-control" />
+        <div class="error" *ngIf="createForm.get('pickupDate')?.invalid && createForm.get('pickupDate')?.touched">Pickup date is required</div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea formControlName="notes" class="form-control" rows="3"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="createForm.invalid">Create</button>
+        <button type="button" class="btn btn-secondary" (click)="cancelCreate()">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- List -->
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <table *ngIf="!isLoading" class="data-table">
+    <thead>
+      <tr>
+        <th>Shipment ID</th>
+        <th>Pickup Date</th>
+        <th>Notes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of pickups">
+        <td>{{ p.shipmentId ?? p.id }}</td>
+        <td>
+          <ng-container *ngIf="editingShipmentId !== (p.shipmentId ?? p.id); else editDateCell">
+            {{ p.pickupDate | date:'medium' }}
+          </ng-container>
+          <ng-template #editDateCell>
+            <form [formGroup]="editForm"><input formControlName="pickupDate" type="datetime-local" class="form-control inline" /></form>
+          </ng-template>
+        </td>
+        <td>
+          <ng-container *ngIf="editingShipmentId !== (p.shipmentId ?? p.id); else editNotesCell">
+            {{ p.notes }}
+          </ng-container>
+          <ng-template #editNotesCell>
+            <form [formGroup]="editForm"><input formControlName="notes" class="form-control inline" /></form>
+          </ng-template>
+        </td>
+        <td class="actions">
+          <ng-container *ngIf="editingShipmentId !== (p.shipmentId ?? p.id); else editActions">
+            <button class="btn-link" (click)="startEdit(p)">Edit</button>
+          </ng-container>
+          <ng-template #editActions>
+            <button class="btn btn-primary" (click)="submitEdit(p.shipmentId ?? p.id)" [disabled]="editForm.invalid">Save</button>
+            <button class="btn-link" (click)="cancelEdit()">Cancel</button>
+          </ng-template>
+        </td>
+      </tr>
+      <tr *ngIf="pickups.length === 0">
+        <td colspan="4" class="empty">No pickups found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

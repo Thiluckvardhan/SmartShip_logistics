@@ -15,6 +15,10 @@ public record TokenDto(
     [Required(ErrorMessage = "Token is required.")]
     string Token);
 
+public record GoogleLoginDto(
+    [Required(ErrorMessage = "Google ID token is required.")]
+    string IdToken);
+
 public record ForgotPasswordDto(
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]

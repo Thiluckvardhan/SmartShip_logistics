@@ -1,0 +1,37 @@
+<div class="users">
+  <h1 class="page-title">Users</h1>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <table *ngIf="!isLoading" class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of users">
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>
+          <div class="role-cell">
+            <select [(ngModel)]="selectedRoles[u.id]" class="role-select">
+              <option value="">Select role</option>
+              <option *ngFor="let r of roles" [value]="r.roleName ?? r.name">{{ r.roleName ?? r.name }}</option>
+            </select>
+            <button class="btn btn-primary" (click)="updateRole(u.id)" [disabled]="!selectedRoles[u.id]">Update</button>
+          </div>
+        </td>
+        <td>
+          <button class="btn-link danger" (click)="delete(u.id)">Delete</button>
+        </td>
+      </tr>
+      <tr *ngIf="users.length === 0">
+        <td colspan="4" class="empty">No users found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

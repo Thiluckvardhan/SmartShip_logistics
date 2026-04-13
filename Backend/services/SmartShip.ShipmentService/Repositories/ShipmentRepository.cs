@@ -87,5 +87,16 @@ public class ShipmentRepository(ShipmentDbContext dbContext) : IShipmentReposito
         .OrderByDescending(x => x.PickupDate)
         .FirstOrDefaultAsync(x => x.ShipmentId == shipmentId);
 
+    public async Task AddOutboxMessageAsync(OutboxMessage outboxMessage) =>
+        await dbContext.OutboxMessages.AddAsync(outboxMessage);
+
+    public Task<List<OutboxMessage>> GetPendingOutboxMessagesAsync(int batchSize) =>
+        dbContext.OutboxMessages
+            .Where(x => x.ProcessedAt == null && x.Status != "Published")
+            .OrderBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Take(batchSize)
+            .ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

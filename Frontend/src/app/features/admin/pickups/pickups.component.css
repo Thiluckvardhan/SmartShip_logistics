@@ -1,0 +1,22 @@
+.pickups { padding: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-title { font-size: 1.75rem; font-weight: 700; }
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; max-width: 560px; }
+.form-card h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.form-group label { font-size: 0.9rem; font-weight: 500; }
+.form-control { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; }
+.form-control.inline { padding: 4px 8px; }
+.error { color: var(--danger); font-size: 0.8rem; }
+.form-actions { display: flex; gap: 12px; margin-top: 8px; }
+.btn { padding: 6px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.loading { text-align: center; padding: 48px; color: var(--text-secondary); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--surface); border-radius: 8px; }
+.data-table th, .data-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table th { font-weight: 600; color: var(--text-secondary); background: var(--background); }
+.actions { display: flex; gap: 10px; align-items: center; }
+.btn-link { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 0.9rem; padding: 0; }
+.empty { text-align: center; color: var(--text-secondary); padding: 24px; }

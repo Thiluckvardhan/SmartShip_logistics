@@ -1,0 +1,18 @@
+.shipment-detail { padding: 24px; }
+.back-link { color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+.page-title { font-size: 1.75rem; font-weight: 700; margin: 16px 0 24px; }
+.loading, .empty { text-align: center; padding: 48px; color: var(--text-secondary); }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px; }
+.detail-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+.detail-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; color: var(--text-secondary); }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.detail-row:last-child { border-bottom: none; }
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 500; background: var(--border); }
+.actions-section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+.actions-section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { padding: 8px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }

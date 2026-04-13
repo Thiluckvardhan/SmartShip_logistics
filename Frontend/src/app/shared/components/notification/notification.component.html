@@ -1,0 +1,10 @@
+<div class="toast-container">
+  <div
+    *ngFor="let notification of notifications$ | async"
+    class="toast"
+    [ngClass]="'toast-' + notification.type"
+  >
+    <span class="toast-message">{{ notification.message }}</span>
+    <button class="toast-dismiss" (click)="dismiss(notification.id)" aria-label="Dismiss">×</button>
+  </div>
+</div>

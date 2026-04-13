@@ -1,0 +1,152 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Create New Shipment</h1>
+    <a routerLink="/shipments" class="btn btn-outline">Cancel</a>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Sender Address -->
+    <div class="section-card" formGroupName="senderAddress">
+      <h2 class="section-title">Sender Address</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" placeholder="Full name" />
+          <span class="error" *ngIf="hasError(senderAddress, 'name', 'required')">Name is required.</span>
+          <span class="error" *ngIf="hasError(senderAddress, 'name', 'minlength')">Min 2 characters.</span>
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="text" formControlName="phone" placeholder="Phone number" />
+          <span class="error" *ngIf="hasError(senderAddress, 'phone', 'required')">Phone is required.</span>
+        </div>
+        <div class="form-group full-width">
+          <label>Street *</label>
+          <input type="text" formControlName="street" placeholder="Street address" />
+          <span class="error" *ngIf="hasError(senderAddress, 'street', 'required')">Street is required.</span>
+        </div>
+        <div class="form-group">
+          <label>City *</label>
+          <input type="text" formControlName="city" placeholder="City" />
+          <span class="error" *ngIf="hasError(senderAddress, 'city', 'required')">City is required.</span>
+        </div>
+        <div class="form-group">
+          <label>State *</label>
+          <input type="text" formControlName="state" placeholder="State" />
+          <span class="error" *ngIf="hasError(senderAddress, 'state', 'required')">State is required.</span>
+        </div>
+        <div class="form-group">
+          <label>Country *</label>
+          <input type="text" formControlName="country" placeholder="Country" />
+          <span class="error" *ngIf="hasError(senderAddress, 'country', 'required')">Country is required.</span>
+        </div>
+        <div class="form-group">
+          <label>Pincode *</label>
+          <input type="text" formControlName="pincode" placeholder="Pincode / ZIP" />
+          <span class="error" *ngIf="hasError(senderAddress, 'pincode', 'required')">Pincode is required.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receiver Address -->
+    <div class="section-card" formGroupName="receiverAddress">
+      <h2 class="section-title">Receiver Address</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" placeholder="Full name" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'name', 'required')">Name is required.</span>
+          <span class="error" *ngIf="hasError(receiverAddress, 'name', 'minlength')">Min 2 characters.</span>
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="text" formControlName="phone" placeholder="Phone number" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'phone', 'required')">Phone is required.</span>
+        </div>
+        <div class="form-group full-width">
+          <label>Street *</label>
+          <input type="text" formControlName="street" placeholder="Street address" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'street', 'required')">Street is required.</span>
+        </div>
+        <div class="form-group">
+          <label>City *</label>
+          <input type="text" formControlName="city" placeholder="City" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'city', 'required')">City is required.</span>
+        </div>
+        <div class="form-group">
+          <label>State *</label>
+          <input type="text" formControlName="state" placeholder="State" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'state', 'required')">State is required.</span>
+        </div>
+        <div class="form-group">
+          <label>Country *</label>
+          <input type="text" formControlName="country" placeholder="Country" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'country', 'required')">Country is required.</span>
+        </div>
+        <div class="form-group">
+          <label>Pincode *</label>
+          <input type="text" formControlName="pincode" placeholder="Pincode / ZIP" />
+          <span class="error" *ngIf="hasError(receiverAddress, 'pincode', 'required')">Pincode is required.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="section-card">
+      <div class="section-header">
+        <h2 class="section-title">Items</h2>
+        <button type="button" class="btn btn-outline btn-sm" (click)="addItem()">+ Add Item</button>
+      </div>
+
+      <div formArrayName="items">
+        <div
+          *ngFor="let item of items.controls; let i = index"
+          [formGroupName]="i"
+          class="item-row">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Item Name *</label>
+              <input type="text" formControlName="itemName" placeholder="Item name" />
+              <span class="error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('required')">
+                Item name is required.
+              </span>
+            </div>
+            <div class="form-group">
+              <label>Quantity *</label>
+              <input type="number" formControlName="quantity" min="1" />
+              <span class="error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('min')">
+                Min quantity is 1.
+              </span>
+            </div>
+            <div class="form-group">
+              <label>Weight (kg) *</label>
+              <input type="number" formControlName="weight" min="0.01" step="0.01" />
+              <span class="error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('min')">
+                Min weight is 0.01 kg.
+              </span>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" formControlName="description" placeholder="Optional" />
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm remove-btn"
+            *ngIf="items.length > 1"
+            (click)="removeItem(i)">
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSubmitting">
+        {{ isSubmitting ? 'Creating...' : 'Create Shipment' }}
+      </button>
+    </div>
+
+  </form>
+</div>

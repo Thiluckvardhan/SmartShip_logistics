@@ -24,5 +24,7 @@ public interface IShipmentRepository
     Task<List<PickupSchedule>> GetAllPickupsAsync();
     Task<List<PickupSchedule>> GetPickupsByShipmentAsync(Guid shipmentId);
     Task<PickupSchedule?> GetLatestPickupByShipmentAsync(Guid shipmentId);
+    Task AddOutboxMessageAsync(OutboxMessage outboxMessage);
+    Task<List<OutboxMessage>> GetPendingOutboxMessagesAsync(int batchSize);
     Task SaveChangesAsync();
 }

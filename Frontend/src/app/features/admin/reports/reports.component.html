@@ -1,0 +1,42 @@
+<div class="reports">
+  <h1 class="page-title">Reports</h1>
+
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button
+      *ngFor="let tab of tabs"
+      class="tab-btn"
+      [class.active]="activeTab === tab.key"
+      (click)="selectTab(tab.key)">
+      {{ tab.label }}
+    </button>
+  </div>
+
+  <div class="report-content">
+    <div *ngIf="isLoading" class="loading">Loading report...</div>
+
+    <div *ngIf="!isLoading && !reportData" class="empty">
+      Select a tab to load the report.
+    </div>
+
+    <div *ngIf="!isLoading && reportData">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of reportEntries">
+            <td class="metric-key">{{ entry.key }}</td>
+            <td>{{ entry.value }}</td>
+          </tr>
+          <tr *ngIf="reportEntries.length === 0">
+            <td colspan="2" class="empty">No data available.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

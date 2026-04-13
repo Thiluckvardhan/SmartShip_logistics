@@ -1,11 +1,16 @@
 using SmartShip.AdminService.DTOs;
 using SmartShip.AdminService.Models;
 using SmartShip.AdminService.Repositories;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace SmartShip.AdminService.Services;
 
-public class AdminService(IAdminRepository repository, ILogger<AdminService> logger) : IAdminService
+public class AdminService(IAdminRepository repository, ILogger<AdminService> logger, IHttpClientFactory httpClientFactory, IServiceTokenGenerator serviceTokenGenerator) : IAdminService
 {
+    private readonly HttpClient _shipmentClient = httpClientFactory.CreateClient("ShipmentService");
+
     // ── Dashboard & Statistics ──────────────────────────────
 
     public async Task<object> GetDashboardAsync()
@@ -242,71 +247,71 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
 
     public Task<object?> ResolveShipmentAsync(Guid id, ResolveShipmentDto request)
     {
-        return Task.FromResult<object?>(new
-        {
-            ShipmentId = id,
-            Status = "Resolved",
-            request.ResolutionNotes,
-            ResolvedAt = DateTime.UtcNow
-        });
+        return ResolveShipmentWithExceptionAsync(id, request.ResolutionNotes);
     }
 
     public Task<object?> DelayShipmentAsync(Guid id, DelayShipmentDto request)
     {
-        return Task.FromResult<object?>(new
-        {
-            ShipmentId = id,
-            Status = "Delayed",
-            request.Reason,
-            UpdatedAt = DateTime.UtcNow
-        });
+        return RaiseShipmentExceptionAsync(id, "Delay", request.Reason, "/api/shipments/{id}/delay");
     }
 
     public Task<object?> ReturnShipmentAsync(Guid id, ReturnShipmentDto request)
     {
-        return Task.FromResult<object?>(new
-        {
-            ShipmentId = id,
-            Status = "Returned",
-            request.Reason,
-            UpdatedAt = DateTime.UtcNow
-        });
+        return RaiseShipmentExceptionAsync(id, "Return", request.Reason, "/api/shipments/{id}/return");
     }
 
-    public Task<object> GetShipmentsPagedAsync(int pageNumber, int pageSize)
+    public async Task<object> GetShipmentsPagedAsync(int pageNumber, int pageSize)
     {
-        return Task.FromResult<object>(new
+        var allShipments = await GetAllShipmentsFromShipmentServiceAsync();
+        var paged = allShipments.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+        return new
         {
-            Items = new List<object>(),
-            TotalCount = 0,
+            Items = paged,
+            TotalCount = allShipments.Count,
             PageNumber = pageNumber,
             PageSize = pageSize,
-            TotalPages = 0,
-            Message = "Shipment data is served via the ShipmentService. Use the gateway to access shipment details."
-        });
+            TotalPages = (int)Math.Ceiling(allShipments.Count / (double)pageSize)
+        };
     }
 
-    public Task<object?> GetShipmentAsync(Guid id)
+    public async Task<object?> GetShipmentAsync(Guid id)
     {
-        return Task.FromResult<object?>(new
+        var response = await SendShipmentRequestAsync(HttpMethod.Get, $"/api/shipments/{id}");
+        if (!response.IsSuccessStatusCode)
         {
-            ShipmentId = id,
-            Message = "Shipment data is served via the ShipmentService. Use the gateway to access shipment details."
-        });
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<object>();
     }
 
-    public Task<object> GetShipmentsByHubPagedAsync(Guid hubId, int pageNumber, int pageSize)
+    public async Task<object> GetShipmentsByHubPagedAsync(Guid hubId, int pageNumber, int pageSize)
     {
-        return Task.FromResult<object>(new
+        var allShipments = await GetAllShipmentsFromShipmentServiceAsync();
+        var filtered = allShipments.Where(x =>
+        {
+            if (!x.TryGetProperty("HubId", out var hubElement))
+            {
+                return false;
+            }
+
+            return hubElement.ValueKind == JsonValueKind.String
+                && Guid.TryParse(hubElement.GetString(), out var parsedHubId)
+                && parsedHubId == hubId;
+        }).ToList();
+
+        var paged = filtered.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+        return new
         {
             HubId = hubId,
-            Items = new List<object>(),
-            TotalCount = 0,
+            Items = paged,
+            TotalCount = filtered.Count,
             PageNumber = pageNumber,
             PageSize = pageSize,
-            TotalPages = 0,
-            Message = "Shipment data is served via the ShipmentService. Use the gateway to access shipment details."
-        });
+            TotalPages = (int)Math.Ceiling(filtered.Count / (double)pageSize)
+        };
     }
 
     // ── Reports ─────────────────────────────────────────────
@@ -348,7 +353,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         return Task.FromResult<object>(new
         {
             Report = "Shipment Performance",
-            Message = "Aggregated from ShipmentService data.",
+            Message = "Sourced from ShipmentService API.",
             GeneratedAt = DateTime.UtcNow
         });
     }
@@ -368,7 +373,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         return Task.FromResult<object>(new
         {
             Report = "Revenue",
-            Message = "Aggregated from ShipmentService data.",
+            Message = "Sourced from ShipmentService API.",
             GeneratedAt = DateTime.UtcNow
         });
     }
@@ -411,4 +416,105 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             l.IsActive
         }).ToList()
     };
+
+    private async Task<object?> ResolveShipmentWithExceptionAsync(Guid shipmentId, string resolutionNotes)
+    {
+        var response = await SendShipmentRequestAsync(HttpMethod.Put, $"/api/shipments/{shipmentId}/in-transit");
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var exceptions = await repository.GetExceptionsByShipmentAsync(shipmentId);
+        var openException = exceptions.FirstOrDefault(x => string.Equals(x.Status, "Open", StringComparison.OrdinalIgnoreCase));
+        if (openException is not null)
+        {
+            openException.Status = "Resolved";
+            openException.ResolvedAt = DateTime.UtcNow;
+            if (!string.IsNullOrWhiteSpace(resolutionNotes))
+            {
+                openException.Description = $"{openException.Description} | Resolution: {resolutionNotes.Trim()}";
+            }
+
+            await repository.SaveChangesAsync();
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<object>();
+        return new
+        {
+            ShipmentId = shipmentId,
+            Status = "InTransit",
+            ResolutionNotes = resolutionNotes,
+            UpdatedAt = DateTime.UtcNow,
+            Payload = payload,
+            ResolvedExceptionId = openException?.ExceptionId
+        };
+    }
+
+    private async Task<object?> RaiseShipmentExceptionAsync(Guid shipmentId, string exceptionType, string reason, string pathTemplate)
+    {
+        var response = await SendShipmentRequestAsync(HttpMethod.Put, pathTemplate.Replace("{id}", shipmentId.ToString()));
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var exceptionRecord = new ExceptionRecord
+        {
+            ExceptionId = Guid.NewGuid(),
+            ShipmentId = shipmentId,
+            ExceptionType = exceptionType,
+            Description = reason.Trim(),
+            Status = "Open",
+            CreatedAt = DateTime.UtcNow,
+            ResolvedAt = null
+        };
+        await repository.AddExceptionAsync(exceptionRecord);
+        await repository.SaveChangesAsync();
+
+        var payload = await response.Content.ReadFromJsonAsync<object>();
+        return new
+        {
+            ShipmentId = shipmentId,
+            Status = exceptionType == "Delay" ? "Delayed" : "Returned",
+            Reason = reason,
+            UpdatedAt = DateTime.UtcNow,
+            Payload = payload,
+            Exception = new
+            {
+                exceptionRecord.ExceptionId,
+                exceptionRecord.ExceptionType,
+                exceptionRecord.Description,
+                exceptionRecord.Status,
+                exceptionRecord.CreatedAt
+            }
+        };
+    }
+
+    private async Task<List<JsonElement>> GetAllShipmentsFromShipmentServiceAsync()
+    {
+        var response = await SendShipmentRequestAsync(HttpMethod.Get, "/api/shipments/all");
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("ShipmentService call failed with status code {StatusCode}", response.StatusCode);
+            return [];
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<List<JsonElement>>();
+        return payload ?? [];
+    }
+
+    private async Task<HttpResponseMessage> SendShipmentRequestAsync(HttpMethod method, string path, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        return await _shipmentClient.SendAsync(request);
+    }
 }

@@ -49,7 +49,10 @@ public class DocumentsController(IDocumentService documentService, IWebHostEnvir
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetDocument(Guid id)
     {
-        var item = await documentService.GetDocumentAsync(id);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var item = await documentService.GetDocumentAsync(id, userId, User.IsInRole("Admin"));
         return item is null ? NotFound(new { message = "Document not found." }) : Ok(item);
     }
 
@@ -66,20 +69,31 @@ public class DocumentsController(IDocumentService documentService, IWebHostEnvir
                 return BadRequest(new { message = "File size exceeds maximum of 10MB." });
         }
 
-        var updated = await documentService.UpdateDocumentAsync(id, request.ShipmentId, request.File, environment.ContentRootPath);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var updated = await documentService.UpdateDocumentAsync(id, request.ShipmentId, request.File, environment.ContentRootPath, userId, User.IsInRole("Admin"));
         return updated is null ? NotFound(new { message = "Document not found." }) : Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteDocument(Guid id)
     {
-        var deleted = await documentService.DeleteDocumentAsync(id);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var deleted = await documentService.DeleteDocumentAsync(id, userId, User.IsInRole("Admin"));
         return deleted ? Ok(new { message = "Document deleted successfully.", id }) : NotFound(new { message = "Document not found." });
     }
 
     [HttpGet("shipment/{shipmentId:guid}")]
     public async Task<IActionResult> GetDocumentsByShipment(Guid shipmentId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
-        => Ok(await documentService.GetDocumentsAsync(shipmentId, pageNumber, pageSize));
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        return Ok(await documentService.GetDocumentsAsync(shipmentId, pageNumber, pageSize, userId, User.IsInRole("Admin")));
+    }
 
     [HttpGet("customer/{customerId:guid}")]
     [Authorize(Roles = "Admin")]
@@ -94,12 +108,21 @@ public class DocumentsController(IDocumentService documentService, IWebHostEnvir
         if (request.File.Length > 10 * 1024 * 1024)
             return BadRequest(new { message = "File size exceeds maximum of 10MB." });
 
-        var result = await documentService.CreateDeliveryProofAsync(shipmentId, request.SignerName, request.Notes, request.File, environment.ContentRootPath);
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var result = await documentService.CreateDeliveryProofAsync(shipmentId, request.SignerName, request.Notes, request.File, environment.ContentRootPath, userId, User.IsInRole("Admin"));
         return result is null ? BadRequest(new { message = "Failed to upload proof." }) : Ok(result);
     }
 
     [HttpGet("delivery-proof/{shipmentId:guid}")]
-    public async Task<IActionResult> GetDeliveryProof(Guid shipmentId) => Ok(await documentService.GetDeliveryProofAsync(shipmentId));
+    public async Task<IActionResult> GetDeliveryProof(Guid shipmentId)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        return Ok(await documentService.GetDeliveryProofAsync(shipmentId, userId, User.IsInRole("Admin")));
+    }
 
     private async Task<IActionResult> UploadTypedDocument(UploadTypedDocumentDto request, string documentType)
     {

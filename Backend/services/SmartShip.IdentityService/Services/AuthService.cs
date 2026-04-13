@@ -2,20 +2,25 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using SmartShip.Core.Email;
 using SmartShip.IdentityService.DTOs;
 using SmartShip.IdentityService.Models;
 using SmartShip.IdentityService.Repositories;
 
 namespace SmartShip.IdentityService.Services;
 
-public class AuthService(IUserRepository repository, IConfiguration configuration) : IAuthService
+public class AuthService(IUserRepository repository, IConfiguration configuration, IEmailService emailService) : IAuthService
 {
-    private readonly string _jwtKey = configuration["Jwt:Key"] ?? "SmartShip.SuperSecret.Key.For.Dev.Only.2026";
-    private readonly string _jwtIssuer = configuration["Jwt:Issuer"] ?? "SmartShip";
+    private readonly string _jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Missing configuration: Jwt:Key");
+    private readonly string _jwtIssuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Missing configuration: Jwt:Issuer");
     private readonly string[] _jwtAudiences =
         configuration.GetSection("Jwt:Audiences").Get<string[]>()?.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
         ?? [configuration["Jwt:Audience"] ?? "SmartShipClients"];
+    private readonly string _googleClientId = configuration["GoogleAuth:ClientId"] ?? string.Empty;
+    private static readonly PasswordHasher<User> PasswordHasher = new();
 
     public async Task<(bool Ok, string? Message, object? Data)> RegisterAsync(RegisterDto request)
     {
@@ -40,10 +45,10 @@ public class AuthService(IUserRepository repository, IConfiguration configuratio
             Name = request.Name.Trim(),
             Email = email,
             Phone = request.Phone?.Trim(),
-            PasswordHash = HashToken(request.Password),
             CreatedAt = now,
             UpdatedAt = now
         };
+        user.PasswordHash = PasswordHasher.HashPassword(user, request.Password);
 
         await repository.AddUserAsync(user);
         await repository.SaveChangesAsync();
@@ -58,11 +63,87 @@ public class AuthService(IUserRepository repository, IConfiguration configuratio
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await repository.GetUserByEmailAsync(email, includeRole: true);
-        if (user is null || user.PasswordHash != HashToken(request.Password))
+        if (user is null)
         {
             return (false, "Invalid credentials.", null);
         }
 
+        var passwordVerification = PasswordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+        if (passwordVerification == PasswordVerificationResult.Failed)
+        {
+            return (false, "Invalid credentials.", null);
+        }
+
+        return await IssueTokensAsync(user);
+    }
+
+    public async Task<(bool Ok, string? Message, object? Data)> LoginWithGoogleAsync(GoogleLoginDto request)
+    {
+        if (string.IsNullOrWhiteSpace(_googleClientId))
+        {
+            return (false, "Google OAuth is not configured.", null);
+        }
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [_googleClientId]
+            });
+        }
+        catch
+        {
+            return (false, "Invalid Google token.", null);
+        }
+
+        if (!payload.EmailVerified)
+        {
+            return (false, "Google account email is not verified.", null);
+        }
+
+        var email = payload.Email.Trim().ToLowerInvariant();
+        var user = await repository.GetUserByEmailAsync(email, includeRole: true);
+
+        if (user is null)
+        {
+            var role = await repository.GetRoleByNameAsync("Customer") ?? await repository.GetFirstRoleAsync();
+            if (role is null)
+            {
+                role = new Role { RoleName = "Customer" };
+                await repository.AddRoleAsync(role);
+                await repository.SaveChangesAsync();
+            }
+
+            var now = DateTime.UtcNow;
+            user = new User
+            {
+                UserId = Guid.NewGuid(),
+                Name = string.IsNullOrWhiteSpace(payload.Name) ? email.Split('@')[0] : payload.Name.Trim(),
+                Email = email,
+                Phone = null,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+            user.PasswordHash = PasswordHasher.HashPassword(user, GenerateToken());
+
+            await repository.AddUserAsync(user);
+            await repository.SaveChangesAsync();
+            await repository.ReplaceUserRoleAsync(user.UserId, role.RoleId);
+            await repository.SaveChangesAsync();
+
+            user = await repository.GetUserByEmailAsync(email, includeRole: true);
+            if (user is null)
+            {
+                return (false, "Unable to create Google user account.", null);
+            }
+        }
+
+        return await IssueTokensAsync(user);
+    }
+
+    private async Task<(bool Ok, string? Message, object? Data)> IssueTokensAsync(User user)
+    {
         var refreshToken = GenerateToken();
         await repository.AddRefreshTokenAsync(new RefreshToken
         {
@@ -116,22 +197,27 @@ public class AuthService(IUserRepository repository, IConfiguration configuratio
         var user = await repository.GetUserByEmailAsync(request.Email.Trim().ToLowerInvariant());
         if (user is null)
         {
-            return (true, "If the email exists, a reset token was created.", null);
+            // Return success even if user doesn't exist to prevent email enumeration
+            return (true, "If the email exists, a password reset OTP has been sent.", null);
         }
 
-        var resetToken = GenerateToken();
+        var otp = GenerateOtp();
         await repository.AddPasswordResetTokenAsync(new PasswordResetToken
         {
             PasswordResetTokenId = Guid.NewGuid(),
             UserId = user.UserId,
-            TokenHash = HashToken(resetToken),
+            TokenHash = HashToken(otp),
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             IsUsed = false
         });
 
         await repository.SaveChangesAsync();
-        return (true, "Reset token generated.", new { resetToken });
+
+        // Send the OTP via email
+        await emailService.SendPasswordResetEmailAsync(user.Email, otp);
+
+        return (true, "If the email exists, a password reset OTP has been sent.", null);
     }
 
     public async Task<(bool Ok, string? Message)> ResetPasswordAsync(ResetPasswordDto request)
@@ -143,7 +229,7 @@ public class AuthService(IUserRepository repository, IConfiguration configuratio
         }
 
         resetToken.IsUsed = true;
-        resetToken.User.PasswordHash = HashToken(request.NewPassword);
+        resetToken.User.PasswordHash = PasswordHasher.HashPassword(resetToken.User, request.NewPassword);
         resetToken.User.UpdatedAt = DateTime.UtcNow;
         await repository.SaveChangesAsync();
         return (true, null);
@@ -350,6 +436,8 @@ public class AuthService(IUserRepository repository, IConfiguration configuratio
     }
 
     private static string GenerateToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+    private static string GenerateOtp() => RandomNumberGenerator.GetInt32(100000, 999999).ToString();
 
     private static string HashToken(string input)
     {

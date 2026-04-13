@@ -7,6 +7,7 @@ public interface IAuthService
     // Auth
     Task<(bool Ok, string? Message, object? Data)> RegisterAsync(RegisterDto request);
     Task<(bool Ok, string? Message, object? Data)> LoginAsync(LoginDto request);
+    Task<(bool Ok, string? Message, object? Data)> LoginWithGoogleAsync(GoogleLoginDto request);
     Task<(bool Ok, string? Message, object? Data)> RefreshTokenAsync(TokenDto request);
     Task<(bool Ok, string? Message)> LogoutAsync(TokenDto request);
     Task<(bool Ok, string? Message, object? Data)> ForgotPasswordAsync(ForgotPasswordDto request);

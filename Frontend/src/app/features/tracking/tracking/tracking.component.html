@@ -1,0 +1,72 @@
+<div class="tracking-page">
+  <h1 class="page-title">Track Shipment</h1>
+
+  <!-- Search bar -->
+  <form [formGroup]="form" (ngSubmit)="onSearch()" class="search-bar">
+    <input
+      type="text"
+      formControlName="trackingNumber"
+      placeholder="Enter tracking number"
+      class="search-input"
+      [class.input-error]="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
+    />
+    <button type="submit" class="btn-primary" [disabled]="form.invalid || isLoading">
+      {{ isLoading ? 'Searching...' : 'Track' }}
+    </button>
+  </form>
+  <span
+    class="field-error"
+    *ngIf="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
+  >
+    Tracking number is required.
+  </span>
+
+  <!-- Tracking info card -->
+  <div class="info-card" *ngIf="trackingData">
+    <div class="info-header">
+      <div>
+        <p class="info-label">Tracking Number</p>
+        <p class="info-value">{{ trackingData.trackingNumber }}</p>
+      </div>
+      <span class="status-badge">{{ trackingData.status }}</span>
+    </div>
+
+    <div class="info-grid" *ngIf="currentLocation">
+      <div>
+        <p class="info-label">Current Location</p>
+        <p class="info-value">
+          {{ currentLocation.latitude }}, {{ currentLocation.longitude }}
+        </p>
+      </div>
+      <div *ngIf="currentLocation.timestamp">
+        <p class="info-label">Last Updated</p>
+        <p class="info-value">{{ currentLocation.timestamp | date:'medium' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-section" *ngIf="timeline.length > 0">
+    <h2 class="section-title">Shipment Timeline</h2>
+    <div class="timeline">
+      <div class="timeline-line"></div>
+      <div class="timeline-item" *ngFor="let event of timeline; let last = last">
+        <div class="event-dot" [class.event-dot-last]="last"></div>
+        <div class="event-card">
+          <div class="event-header">
+            <span class="event-status">{{ event.status }}</span>
+            <span class="event-time">{{ event.timestamp | date:'medium' }}</span>
+          </div>
+          <p class="event-location" *ngIf="event.location">
+            <span class="location-icon">📍</span> {{ event.location }}
+          </p>
+          <p class="event-desc" *ngIf="event.description">{{ event.description }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && !trackingData">
+    <p>Enter a tracking number above to see shipment details.</p>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="exceptions">
+  <h1 class="page-title">Exceptions</h1>
+
+  <div *ngIf="isLoading" class="loading">Loading...</div>
+
+  <table *ngIf="!isLoading" class="data-table">
+    <thead>
+      <tr>
+        <th>Tracking #</th>
+        <th>Reason</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let e of exceptions">
+        <td>{{ e.trackingNumber }}</td>
+        <td>{{ e.reason }}</td>
+        <td><span class="badge">{{ e.status }}</span></td>
+        <td>{{ e.createdAt | date:'short' }}</td>
+        <td class="actions">
+          <button class="btn btn-success" (click)="openModal('resolve', e.shipmentId ?? e.id)">Resolve</button>
+          <button class="btn btn-warning" (click)="openModal('delay', e.shipmentId ?? e.id)">Delay</button>
+          <button class="btn btn-danger" (click)="openModal('return', e.shipmentId ?? e.id)">Return</button>
+        </td>
+      </tr>
+      <tr *ngIf="exceptions.length === 0">
+        <td colspan="5" class="empty">No exceptions found.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="pagination" *ngIf="!isLoading">
+    <button (click)="prevPage()" [disabled]="page === 1">Previous</button>
+    <span>Page {{ page }} of {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="page === totalPages">Next</button>
+  </div>
+
+  <!-- Resolve Modal -->
+  <div class="modal-overlay" *ngIf="modalType === 'resolve'" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Resolve Shipment</h2>
+      <form [formGroup]="resolveForm" (ngSubmit)="submitResolve()">
+        <div class="form-group">
+          <label>Resolution Notes</label>
+          <textarea formControlName="resolutionNotes" class="form-control" rows="4"></textarea>
+          <div class="error" *ngIf="resolveForm.get('resolutionNotes')?.invalid && resolveForm.get('resolutionNotes')?.touched">
+            Notes required (5–1000 chars)
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" [disabled]="resolveForm.invalid">Resolve</button>
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delay Modal -->
+  <div class="modal-overlay" *ngIf="modalType === 'delay'" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Delay Shipment</h2>
+      <form [formGroup]="delayForm" (ngSubmit)="submitDelay()">
+        <div class="form-group">
+          <label>Reason</label>
+          <textarea formControlName="reason" class="form-control" rows="4"></textarea>
+          <div class="error" *ngIf="delayForm.get('reason')?.invalid && delayForm.get('reason')?.touched">
+            Reason required (5–1000 chars)
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-warning" [disabled]="delayForm.invalid">Delay</button>
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Return Modal -->
+  <div class="modal-overlay" *ngIf="modalType === 'return'" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Return Shipment</h2>
+      <form [formGroup]="returnForm" (ngSubmit)="submitReturn()">
+        <div class="form-group">
+          <label>Reason</label>
+          <textarea formControlName="reason" class="form-control" rows="4"></textarea>
+          <div class="error" *ngIf="returnForm.get('reason')?.invalid && returnForm.get('reason')?.touched">
+            Reason required (5–1000 chars)
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-danger" [disabled]="returnForm.invalid">Return</button>
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
