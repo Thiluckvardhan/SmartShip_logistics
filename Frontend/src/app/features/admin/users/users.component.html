@@ -1,12 +1,17 @@
-<div class="users">
-  <h1 class="page-title">Users</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Users</h1>
+    <p class="page-sub">Manage user accounts and role assignments.</p>
+  </div>
+</div>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+<div *ngIf="isLoading" class="skeleton-table"></div>
 
-  <table *ngIf="!isLoading" class="data-table">
+<div class="table-card" *ngIf="!isLoading">
+  <table class="ss-table">
     <thead>
       <tr>
-        <th>Name</th>
+        <th>User</th>
         <th>Email</th>
         <th>Role</th>
         <th>Actions</th>
@@ -14,23 +19,40 @@
     </thead>
     <tbody>
       <tr *ngFor="let u of users">
-        <td>{{ u.name }}</td>
-        <td>{{ u.email }}</td>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar">{{ u.name?.charAt(0)?.toUpperCase() || '?' }}</div>
+            <span class="user-name">{{ u.name }}</span>
+          </div>
+        </td>
+        <td class="muted">{{ u.email }}</td>
         <td>
           <div class="role-cell">
             <select [(ngModel)]="selectedRoles[u.id]" class="role-select">
-              <option value="">Select role</option>
-              <option *ngFor="let r of roles" [value]="r.roleName ?? r.name">{{ r.roleName ?? r.name }}</option>
+              <option *ngFor="let role of roleOptions" [value]="role">{{ role }}</option>
             </select>
-            <button class="btn btn-primary" (click)="updateRole(u.id)" [disabled]="!selectedRoles[u.id]">Update</button>
+            <button class="btn-save" (click)="updateRole(u.id)" [disabled]="!selectedRoles[u.id]">Save</button>
           </div>
         </td>
         <td>
-          <button class="btn-link danger" (click)="delete(u.id)">Delete</button>
+          <button class="btn-delete" (click)="delete(u.id)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+            Delete
+          </button>
         </td>
       </tr>
       <tr *ngIf="users.length === 0">
-        <td colspan="4" class="empty">No users found.</td>
+        <td colspan="4">
+          <div class="empty-row">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+            <span>No users found.</span>
+          </div>
+        </td>
       </tr>
     </tbody>
   </table>

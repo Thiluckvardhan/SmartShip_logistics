@@ -1,62 +1,82 @@
-<div class="page-container">
-  <div class="page-header">
-    <h1>My Shipments</h1>
-    <a routerLink="/shipments/new" class="btn btn-primary">+ New Shipment</a>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Shipments</h1>
+    <p class="page-sub">Track and manage all your shipments.</p>
+  </div>
+  <a routerLink="/shipments/new" class="btn-accent">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    New Shipment
+  </a>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar" *ngIf="!isLoading && shipments.length > 0">
+  <div class="search-wrap">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" [(ngModel)]="searchQuery" placeholder="Search tracking number..." class="search-input"/>
+  </div>
+  <select [(ngModel)]="statusFilter" class="filter-select">
+    <option value="">All Statuses</option>
+    <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+  </select>
+</div>
+
+<!-- Skeleton -->
+<div *ngIf="isLoading" class="skeleton-table"></div>
+
+<!-- Table Card -->
+<div class="table-card" *ngIf="!isLoading">
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="filteredShipments.length === 0">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+      <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+    </svg>
+    <p>{{ shipments.length === 0 ? 'No shipments yet.' : 'No results match your filter.' }}</p>
+    <a routerLink="/shipments/new" class="btn-accent-sm" *ngIf="shipments.length === 0">Create your first shipment</a>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">Loading shipments...</div>
+  <table class="ss-table" *ngIf="filteredShipments.length > 0">
+    <thead>
+      <tr>
+        <th>Tracking #</th>
+        <th>Sender</th>
+        <th>Receiver</th>
+        <th>Status</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of pagedFiltered">
+        <td>
+          <a [routerLink]="['/tracking']" [queryParams]="{ trackingNumber: s.trackingNumber }" class="tracking-link mono">{{ s.trackingNumber }}</a>
+          <div class="tracking-sub">Shipment ID: {{ s.id || s.shipmentId || s.ShipmentId }}</div>
+        </td>
+        <td>{{ s.senderAddress?.name ?? s.senderName ?? '—' }}</td>
+        <td>{{ s.receiverAddress?.name ?? s.receiverName ?? '—' }}</td>
+        <td><span class="status-badge" [ngClass]="'status-' + (s.status | lowercase)">{{ s.status }}</span></td>
+        <td class="muted">{{ s.createdAt | date:'MMM d, y' }}</td>
+        <td>
+          <a [routerLink]="['/shipments', s.id || s.shipmentId || s.ShipmentId]" class="btn-view">View</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-  <div *ngIf="!isLoading">
-    <div *ngIf="shipments.length === 0" class="empty-state">
-      <p>No shipments found. <a routerLink="/shipments/new">Create your first shipment</a>.</p>
-    </div>
-
-    <div *ngIf="shipments.length > 0">
-      <table class="shipments-table">
-        <thead>
-          <tr>
-            <th>Tracking #</th>
-            <th>Sender</th>
-            <th>Receiver</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let shipment of pagedShipments">
-            <td class="tracking-number">{{ shipment.trackingNumber }}</td>
-            <td>{{ shipment.senderAddress?.name ?? shipment.senderName ?? '—' }}</td>
-            <td>{{ shipment.receiverAddress?.name ?? shipment.receiverName ?? '—' }}</td>
-            <td>
-              <span class="badge" [ngClass]="getStatusClass(shipment.status)">
-                {{ shipment.status }}
-              </span>
-            </td>
-            <td>{{ shipment.createdAt | date:'mediumDate' }}</td>
-            <td>
-              <button class="btn btn-sm btn-outline" (click)="viewShipment(shipment.id)">View</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="pagination" *ngIf="totalPages > 1">
-        <button class="btn btn-sm btn-outline" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
-          &laquo; Prev
-        </button>
-        <button
-          *ngFor="let page of pages"
-          class="btn btn-sm"
-          [class.btn-primary]="page === currentPage"
-          [class.btn-outline]="page !== currentPage"
-          (click)="goToPage(page)">
-          {{ page }}
-        </button>
-        <button class="btn btn-sm btn-outline" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">
-          Next &raquo;
-        </button>
-      </div>
-    </div>
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalFilteredPages > 1">
+    <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> Prev
+    </button>
+    <span class="page-info">{{ currentPage }} / {{ totalFilteredPages }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalFilteredPages">
+      Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
 </div>

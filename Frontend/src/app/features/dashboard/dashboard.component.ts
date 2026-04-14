@@ -30,6 +30,10 @@ export class DashboardComponent implements OnInit {
     return this.shipments.filter(s => s.status === 'Delivered').length;
   }
 
+  get delayedCount(): number {
+    return this.shipments.filter(s => s.status === 'Delayed' || s.status === 'Failed').length;
+  }
+
   get recentShipments(): any[] {
     return [...this.shipments]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

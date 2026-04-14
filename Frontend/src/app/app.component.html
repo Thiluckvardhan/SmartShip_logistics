@@ -1,8 +1,8 @@
-<app-navbar></app-navbar>
+<app-navbar *ngIf="!isAuthPage"></app-navbar>
 <app-spinner></app-spinner>
 <app-notification></app-notification>
-<main class="main-content">
-  <div class="page-container">
+<main [class.main-content]="!isAuthPage">
+  <div [class.page-container]="!isAuthPage">
     <router-outlet></router-outlet>
   </div>
 </main>

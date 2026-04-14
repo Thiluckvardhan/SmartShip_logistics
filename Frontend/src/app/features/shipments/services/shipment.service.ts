@@ -78,6 +78,10 @@ export class ShipmentService {
     return this.http.put(`${this.apiUrl}/api/shipments/${id}/delay`, {});
   }
 
+  markFailed(id: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/shipments/${id}/status`, { status: 'Failed' });
+  }
+
   markReturned(id: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/api/shipments/${id}/return`, {});
   }

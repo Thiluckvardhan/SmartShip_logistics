@@ -1,70 +1,137 @@
-<div class="admin-dashboard">
-  <h1 class="page-title">Admin Dashboard</h1>
+<!-- Loading Skeletons -->
+<div *ngIf="isLoading" class="skeleton-wrap">
+  <div class="skeleton-grid">
+    <div class="skeleton-card" *ngFor="let i of [1,2,3,4]"></div>
+  </div>
+  <div class="skeleton-table"></div>
+</div>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+<!-- Content -->
+<div *ngIf="!isLoading">
 
-  <div *ngIf="!isLoading">
-    <!-- KPI Cards -->
-    <div class="stats-grid" *ngIf="statistics">
-      <div class="stat-card">
-        <div class="stat-label">Total Shipments</div>
-        <div class="stat-value">{{ statistics.totalShipments ?? 0 }}</div>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Welcome back — here's what's happening today.</p>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" *ngIf="statistics">
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Active Hubs</div>
-        <div class="stat-value">{{ statistics.activeHubs ?? 0 }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Pending Exceptions</div>
-        <div class="stat-value">{{ statistics.pendingExceptions ?? 0 }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Users</div>
-        <div class="stat-value">{{ statistics.totalUsers ?? 0 }}</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ statistics.totalShipments ?? 0 }}</div>
+        <div class="kpi-label">Total Shipments</div>
       </div>
     </div>
 
-    <!-- Recent Data Tables -->
-    <div class="tables-section" *ngIf="dashboard">
-      <div class="table-card" *ngIf="dashboard.recentShipments?.length">
-        <h2>Recent Shipments</h2>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Tracking #</th>
-              <th>Status</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of dashboard.recentShipments">
-              <td>{{ s.trackingNumber }}</td>
-              <td><span class="badge badge-{{ s.status | lowercase }}">{{ s.status }}</span></td>
-              <td>{{ s.createdAt | date:'short' }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
       </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ statistics.activeHubs ?? 0 }}</div>
+        <div class="kpi-label">Active Hubs</div>
+      </div>
+    </div>
 
-      <div class="table-card" *ngIf="dashboard.recentExceptions?.length">
-        <h2>Recent Exceptions</h2>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Shipment</th>
-              <th>Reason</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let e of dashboard.recentExceptions">
-              <td>{{ e.trackingNumber }}</td>
-              <td>{{ e.reason }}</td>
-              <td>{{ e.createdAt | date:'short' }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-orange">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ statistics.pendingExceptions ?? 0 }}</div>
+        <div class="kpi-label">Pending Exceptions</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon kpi-purple">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ statistics.totalUsers ?? 0 }}</div>
+        <div class="kpi-label">Total Users</div>
       </div>
     </div>
   </div>
+
+  <!-- Tables Row -->
+  <div class="tables-row" *ngIf="dashboard">
+
+    <!-- Recent Shipments -->
+    <div class="data-card" *ngIf="dashboard.recentShipments?.length">
+      <div class="data-card-header">
+        <h2>Recent Shipments</h2>
+        <a routerLink="/admin/shipments" class="view-all">View all →</a>
+      </div>
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th>Tracking #</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of dashboard.recentShipments">
+            <td class="mono">{{ s.trackingNumber }}</td>
+            <td><span class="status-badge" [ngClass]="'status-' + (s.status | lowercase)">{{ s.status }}</span></td>
+            <td class="muted">{{ s.createdAt | date:'MMM d, y' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recent Exceptions -->
+    <div class="data-card" *ngIf="dashboard.recentExceptions?.length">
+      <div class="data-card-header">
+        <h2>Recent Exceptions</h2>
+        <a routerLink="/admin/exceptions" class="view-all">View all →</a>
+      </div>
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th>Shipment</th>
+            <th>Reason</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of dashboard.recentExceptions">
+            <td class="mono">{{ e.trackingNumber }}</td>
+            <td class="truncate">{{ e.reason }}</td>
+            <td class="muted">{{ e.createdAt | date:'MMM d, y' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!dashboard.recentShipments?.length && !dashboard.recentExceptions?.length">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <p>No recent activity to display.</p>
+    </div>
+
+  </div>
+
 </div>

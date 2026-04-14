@@ -10,12 +10,25 @@ export interface LoginDto {
   password: string;
 }
 
+export interface VerifyLoginOtpDto {
+  challengeId: string;
+  otp: string;
+}
+
+export interface ResendLoginOtpDto {
+  challengeId: string;
+}
+
 export interface TokenDto {
   token: string;
 }
 
 export interface GoogleLoginDto {
   idToken: string;
+}
+
+export interface GoogleConfigResponse {
+  clientId?: string;
 }
 
 export interface ForgotPasswordDto {
@@ -46,8 +59,12 @@ export interface AssignUserRoleDto {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string;
+  refreshToken?: string;
+  requiresOtp?: boolean;
+  challengeId?: string;
+  message?: string;
+  cooldownSeconds?: number;
 }
 
 export interface UserProfile {

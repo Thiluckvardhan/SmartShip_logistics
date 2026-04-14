@@ -1,56 +1,102 @@
-<div class="admin-shipments">
-  <h1 class="page-title">Shipments</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Shipments</h1>
+    <p class="page-sub">Manage and update all shipment statuses.</p>
+  </div>
+</div>
 
-  <!-- Filter Bar -->
-  <div class="filter-bar">
-    <label for="statusFilter">Status:</label>
-    <select id="statusFilter" [(ngModel)]="statusFilter" class="filter-select">
-      <option *ngFor="let s of statuses" [value]="s">{{ s || 'All' }}</option>
+<!-- Filter Bar -->
+<div class="toolbar">
+  <div class="filter-group">
+    <svg class="filter-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+    </svg>
+    <select [(ngModel)]="statusFilter" class="filter-select">
+      <option *ngFor="let s of statuses" [value]="s">{{ s || 'All Statuses' }}</option>
     </select>
   </div>
+  <div class="result-count" *ngIf="!isLoading">
+    {{ filteredShipments.length }} shipment{{ filteredShipments.length !== 1 ? 's' : '' }}
+  </div>
+</div>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+<!-- Skeleton -->
+<div *ngIf="isLoading" class="skeleton-table"></div>
 
-  <table *ngIf="!isLoading" class="data-table">
+<!-- Table Card -->
+<div class="table-card" *ngIf="!isLoading">
+  <table class="ss-table">
     <thead>
       <tr>
         <th>Tracking #</th>
         <th>Sender</th>
         <th>Receiver</th>
         <th>Status</th>
-        <th>Created</th>
+        <th>Date</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let s of filteredShipments">
-        <td><a [routerLink]="['/admin/shipments', s.id]">{{ s.trackingNumber }}</a></td>
-        <td>{{ s.senderAddress?.name ?? s.sender }}</td>
-        <td>{{ s.receiverAddress?.name ?? s.receiver }}</td>
-        <td><span class="badge">{{ s.status }}</span></td>
-        <td>{{ s.createdAt | date:'short' }}</td>
         <td>
-          <select class="action-select" (change)="updateStatus(s.id, $any($event.target).value); $any($event.target).value = ''">
-            <option value="">Action</option>
-            <option value="pickup">Mark Picked Up</option>
-            <option value="in-transit">Mark In Transit</option>
-            <option value="out-for-delivery">Mark Out for Delivery</option>
-            <option value="delivered">Mark Delivered</option>
-            <option value="delay">Mark Delayed</option>
-            <option value="return">Mark Returned</option>
-          </select>
+          <a [routerLink]="['/admin/shipments', s.id]" class="tracking-link">
+            {{ s.trackingNumber }}
+          </a>
+          <div class="tracking-sub">Shipment ID: {{ s.id }}</div>
+        </td>
+        <td>{{ s.senderAddress?.name ?? s.sender ?? '—' }}</td>
+        <td>{{ s.receiverAddress?.name ?? s.receiver ?? '—' }}</td>
+        <td>
+          <span class="status-badge" [ngClass]="'status-' + (s.status | lowercase)">
+            {{ s.status }}
+          </span>
+        </td>
+        <td class="muted">{{ s.createdAt | date:'MMM d, y' }}</td>
+        <td>
+          <div class="action-group">
+            <button type="button" class="btn-view" (click)="viewShipment(s.id)">View</button>
+            <select class="action-select"
+              (change)="updateStatus(s.id, $any($event.target).value); $any($event.target).value = ''">
+              <option value="">Update status</option>
+              <option value="pickup">Picked Up</option>
+              <option value="in-transit">In Transit</option>
+              <option value="out-for-delivery">Out for Delivery</option>
+              <option value="delivered">Delivered</option>
+              <option value="failed">Failed</option>
+              <option value="delay">Delayed</option>
+              <option value="return">Returned</option>
+            </select>
+          </div>
         </td>
       </tr>
       <tr *ngIf="filteredShipments.length === 0">
-        <td colspan="6" class="empty">No shipments found.</td>
+        <td colspan="6">
+          <div class="empty-row">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+              <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            </svg>
+            <span>No shipments found.</span>
+          </div>
+        </td>
       </tr>
     </tbody>
   </table>
 
   <!-- Pagination -->
-  <div class="pagination" *ngIf="!isLoading">
-    <button (click)="prevPage()" [disabled]="page === 1">Previous</button>
-    <span>Page {{ page }} of {{ totalPages }}</span>
-    <button (click)="nextPage()" [disabled]="page === totalPages">Next</button>
+  <div class="pagination">
+    <button class="page-btn" (click)="prevPage()" [disabled]="page === 1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Prev
+    </button>
+    <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="page === totalPages">
+      Next
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
   </div>
 </div>

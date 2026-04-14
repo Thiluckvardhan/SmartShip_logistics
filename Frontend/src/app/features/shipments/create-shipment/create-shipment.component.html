@@ -1,152 +1,235 @@
-<div class="page-container">
-  <div class="page-header">
-    <h1>Create New Shipment</h1>
-    <a routerLink="/shipments" class="btn btn-outline">Cancel</a>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Create Shipment</h1>
+    <p class="page-sub">Fill in the details to create a new shipment.</p>
+  </div>
+  <a routerLink="/shipments" class="btn-cancel">Cancel</a>
+</div>
+
+<!-- Stepper -->
+<div class="stepper">
+  <div *ngFor="let step of steps; let i = index" class="step-item">
+    <div class="step-circle" [class.done]="currentStep > i" [class.active]="currentStep === i">
+      <svg *ngIf="currentStep > i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span *ngIf="currentStep <= i">{{ i + 1 }}</span>
+    </div>
+    <span class="step-label" [class.active]="currentStep === i">{{ step }}</span>
+    <div class="step-line" *ngIf="i < steps.length - 1" [class.done]="currentStep > i"></div>
+  </div>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+  <!-- Step 0: Sender -->
+  <div class="step-card" *ngIf="currentStep === 0" formGroupName="senderAddress">
+    <div class="step-card-header">
+      <div class="step-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <h2>Sender Details</h2>
+    </div>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>Full Name *</label>
+        <input formControlName="name" class="field-input" placeholder="Sender's full name"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'name','required')">Name is required.</div>
+        <div class="field-error" *ngIf="hasError(senderAddress,'name','minlength')">Min 2 characters.</div>
+      </div>
+      <div class="field-group">
+        <label>Phone *</label>
+        <input formControlName="phone" class="field-input" placeholder="+91 98765 43210"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'phone','required')">Phone is required.</div>
+      </div>
+      <div class="field-group full">
+        <label>Street Address *</label>
+        <input formControlName="street" class="field-input" placeholder="Street, building, area"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'street','required')">Street is required.</div>
+      </div>
+      <div class="field-group">
+        <label>City *</label>
+        <input formControlName="city" class="field-input" placeholder="City"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'city','required')">City is required.</div>
+      </div>
+      <div class="field-group">
+        <label>State *</label>
+        <input formControlName="state" class="field-input" placeholder="State"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'state','required')">State is required.</div>
+      </div>
+      <div class="field-group">
+        <label>Country *</label>
+        <input formControlName="country" class="field-input" placeholder="Country"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'country','required')">Country is required.</div>
+      </div>
+      <div class="field-group">
+        <label>Pincode *</label>
+        <input formControlName="pincode" class="field-input" placeholder="Pincode / ZIP"/>
+        <div class="field-error" *ngIf="hasError(senderAddress,'pincode','required')">Pincode is required.</div>
+      </div>
+    </div>
+    <div class="step-actions">
+      <div></div>
+      <button type="button" class="btn-next" (click)="nextStep()" [disabled]="!senderValid">Continue →</button>
+    </div>
   </div>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-
-    <!-- Sender Address -->
-    <div class="section-card" formGroupName="senderAddress">
-      <h2 class="section-title">Sender Address</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Name *</label>
-          <input type="text" formControlName="name" placeholder="Full name" />
-          <span class="error" *ngIf="hasError(senderAddress, 'name', 'required')">Name is required.</span>
-          <span class="error" *ngIf="hasError(senderAddress, 'name', 'minlength')">Min 2 characters.</span>
-        </div>
-        <div class="form-group">
-          <label>Phone *</label>
-          <input type="text" formControlName="phone" placeholder="Phone number" />
-          <span class="error" *ngIf="hasError(senderAddress, 'phone', 'required')">Phone is required.</span>
-        </div>
-        <div class="form-group full-width">
-          <label>Street *</label>
-          <input type="text" formControlName="street" placeholder="Street address" />
-          <span class="error" *ngIf="hasError(senderAddress, 'street', 'required')">Street is required.</span>
-        </div>
-        <div class="form-group">
-          <label>City *</label>
-          <input type="text" formControlName="city" placeholder="City" />
-          <span class="error" *ngIf="hasError(senderAddress, 'city', 'required')">City is required.</span>
-        </div>
-        <div class="form-group">
-          <label>State *</label>
-          <input type="text" formControlName="state" placeholder="State" />
-          <span class="error" *ngIf="hasError(senderAddress, 'state', 'required')">State is required.</span>
-        </div>
-        <div class="form-group">
-          <label>Country *</label>
-          <input type="text" formControlName="country" placeholder="Country" />
-          <span class="error" *ngIf="hasError(senderAddress, 'country', 'required')">Country is required.</span>
-        </div>
-        <div class="form-group">
-          <label>Pincode *</label>
-          <input type="text" formControlName="pincode" placeholder="Pincode / ZIP" />
-          <span class="error" *ngIf="hasError(senderAddress, 'pincode', 'required')">Pincode is required.</span>
-        </div>
+  <!-- Step 1: Receiver -->
+  <div class="step-card" *ngIf="currentStep === 1" formGroupName="receiverAddress">
+    <div class="step-card-header">
+      <div class="step-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <h2>Receiver Details</h2>
+    </div>
+    <div class="form-grid">
+      <div class="field-group">
+        <label>Full Name *</label>
+        <input formControlName="name" class="field-input" placeholder="Receiver's full name"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'name','required')">Name is required.</div>
+      </div>
+      <div class="field-group">
+        <label>Phone *</label>
+        <input formControlName="phone" class="field-input" placeholder="+91 98765 43210"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'phone','required')">Phone is required.</div>
+      </div>
+      <div class="field-group full">
+        <label>Street Address *</label>
+        <input formControlName="street" class="field-input" placeholder="Street, building, area"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'street','required')">Street is required.</div>
+      </div>
+      <div class="field-group">
+        <label>City *</label>
+        <input formControlName="city" class="field-input" placeholder="City"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'city','required')">City is required.</div>
+      </div>
+      <div class="field-group">
+        <label>State *</label>
+        <input formControlName="state" class="field-input" placeholder="State"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'state','required')">State is required.</div>
+      </div>
+      <div class="field-group">
+        <label>Country *</label>
+        <input formControlName="country" class="field-input" placeholder="Country"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'country','required')">Country is required.</div>
+      </div>
+      <div class="field-group">
+        <label>Pincode *</label>
+        <input formControlName="pincode" class="field-input" placeholder="Pincode / ZIP"/>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'pincode','required')">Pincode is required.</div>
       </div>
     </div>
-
-    <!-- Receiver Address -->
-    <div class="section-card" formGroupName="receiverAddress">
-      <h2 class="section-title">Receiver Address</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Name *</label>
-          <input type="text" formControlName="name" placeholder="Full name" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'name', 'required')">Name is required.</span>
-          <span class="error" *ngIf="hasError(receiverAddress, 'name', 'minlength')">Min 2 characters.</span>
-        </div>
-        <div class="form-group">
-          <label>Phone *</label>
-          <input type="text" formControlName="phone" placeholder="Phone number" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'phone', 'required')">Phone is required.</span>
-        </div>
-        <div class="form-group full-width">
-          <label>Street *</label>
-          <input type="text" formControlName="street" placeholder="Street address" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'street', 'required')">Street is required.</span>
-        </div>
-        <div class="form-group">
-          <label>City *</label>
-          <input type="text" formControlName="city" placeholder="City" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'city', 'required')">City is required.</span>
-        </div>
-        <div class="form-group">
-          <label>State *</label>
-          <input type="text" formControlName="state" placeholder="State" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'state', 'required')">State is required.</span>
-        </div>
-        <div class="form-group">
-          <label>Country *</label>
-          <input type="text" formControlName="country" placeholder="Country" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'country', 'required')">Country is required.</span>
-        </div>
-        <div class="form-group">
-          <label>Pincode *</label>
-          <input type="text" formControlName="pincode" placeholder="Pincode / ZIP" />
-          <span class="error" *ngIf="hasError(receiverAddress, 'pincode', 'required')">Pincode is required.</span>
-        </div>
-      </div>
+    <div class="step-actions">
+      <button type="button" class="btn-back" (click)="prevStep()">← Back</button>
+      <button type="button" class="btn-next" (click)="nextStep()" [disabled]="!receiverValid">Continue →</button>
     </div>
+  </div>
 
-    <!-- Items -->
-    <div class="section-card">
-      <div class="section-header">
-        <h2 class="section-title">Items</h2>
-        <button type="button" class="btn btn-outline btn-sm" (click)="addItem()">+ Add Item</button>
+  <!-- Step 2: Items -->
+  <div class="step-card" *ngIf="currentStep === 2">
+    <div class="step-card-header">
+      <div class="step-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        </svg>
       </div>
-
-      <div formArrayName="items">
-        <div
-          *ngFor="let item of items.controls; let i = index"
-          [formGroupName]="i"
-          class="item-row">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Item Name *</label>
-              <input type="text" formControlName="itemName" placeholder="Item name" />
-              <span class="error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('required')">
-                Item name is required.
-              </span>
-            </div>
-            <div class="form-group">
-              <label>Quantity *</label>
-              <input type="number" formControlName="quantity" min="1" />
-              <span class="error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('min')">
-                Min quantity is 1.
-              </span>
-            </div>
-            <div class="form-group">
-              <label>Weight (kg) *</label>
-              <input type="number" formControlName="weight" min="0.01" step="0.01" />
-              <span class="error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('min')">
-                Min weight is 0.01 kg.
-              </span>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <input type="text" formControlName="description" placeholder="Optional" />
-            </div>
+      <h2>Package Items</h2>
+      <button type="button" class="btn-add-item" (click)="addItem()">+ Add Item</button>
+    </div>
+    <div formArrayName="items">
+      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="item-block">
+        <div class="item-block-header">
+          <span class="item-num">Item {{ i + 1 }}</span>
+          <button type="button" class="btn-remove" *ngIf="items.length > 1" (click)="removeItem(i)">Remove</button>
+        </div>
+        <div class="form-grid">
+          <div class="field-group full">
+            <label>Item Name *</label>
+            <input formControlName="itemName" class="field-input" placeholder="e.g. Electronics, Clothing"/>
+            <div class="field-error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('required')">Item name is required.</div>
           </div>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm remove-btn"
-            *ngIf="items.length > 1"
-            (click)="removeItem(i)">
-            Remove
-          </button>
+          <div class="field-group">
+            <label>Quantity *</label>
+            <input type="number" formControlName="quantity" class="field-input" min="1"/>
+            <div class="field-error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('min')">Min 1.</div>
+          </div>
+          <div class="field-group">
+            <label>Weight (kg) *</label>
+            <input type="number" formControlName="weight" class="field-input" min="0.01" step="0.01"/>
+            <div class="field-error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('min')">Min 0.01 kg.</div>
+          </div>
+          <div class="field-group full">
+            <label>Description <span class="optional">(optional)</span></label>
+            <input formControlName="description" class="field-input" placeholder="Brief description"/>
+          </div>
         </div>
       </div>
     </div>
+    <div class="step-actions">
+      <button type="button" class="btn-back" (click)="prevStep()">← Back</button>
+      <button type="button" class="btn-next" (click)="nextStep()" [disabled]="!itemsValid">Review →</button>
+    </div>
+  </div>
 
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isSubmitting">
+  <!-- Step 3: Review -->
+  <div class="step-card" *ngIf="currentStep === 3">
+    <div class="step-card-header">
+      <div class="step-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+      </div>
+      <h2>Review & Confirm</h2>
+    </div>
+
+    <div class="review-grid">
+      <div class="review-section">
+        <h3>Sender</h3>
+        <p><strong>{{ form.value.senderAddress?.name }}</strong></p>
+        <p>{{ form.value.senderAddress?.phone }}</p>
+        <p>{{ form.value.senderAddress?.street }}, {{ form.value.senderAddress?.city }}</p>
+        <p>{{ form.value.senderAddress?.state }}, {{ form.value.senderAddress?.country }} - {{ form.value.senderAddress?.pincode }}</p>
+      </div>
+      <div class="review-section">
+        <h3>Receiver</h3>
+        <p><strong>{{ form.value.receiverAddress?.name }}</strong></p>
+        <p>{{ form.value.receiverAddress?.phone }}</p>
+        <p>{{ form.value.receiverAddress?.street }}, {{ form.value.receiverAddress?.city }}</p>
+        <p>{{ form.value.receiverAddress?.state }}, {{ form.value.receiverAddress?.country }} - {{ form.value.receiverAddress?.pincode }}</p>
+      </div>
+    </div>
+
+    <div class="review-items">
+      <h3>Items ({{ items.length }})</h3>
+      <div class="item-pill" *ngFor="let item of form.value.items; let i = index">
+        <span class="item-pill-name">{{ item.itemName }}</span>
+        <span class="item-pill-meta">Qty: {{ item.quantity }} · {{ item.weight }} kg</span>
+      </div>
+    </div>
+
+    <div class="review-summary">
+      <div class="review-summary-row">
+        <span>Total Weight</span>
+        <strong>{{ totalWeight | number:'1.2-2' }} kg</strong>
+      </div>
+      <div class="review-summary-row total">
+        <span>Total Price</span>
+        <strong>INR {{ totalPrice | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button type="button" class="btn-back" (click)="prevStep()">← Back</button>
+      <button type="submit" class="btn-submit" [disabled]="form.invalid || isSubmitting">
+        <span class="spinner" *ngIf="isSubmitting"></span>
         {{ isSubmitting ? 'Creating...' : 'Create Shipment' }}
       </button>
     </div>
+  </div>
 
-  </form>
-</div>
+</form>

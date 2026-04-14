@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
-import { RoleService } from '../services/role.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
@@ -14,35 +13,30 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
-  private roleService = inject(RoleService);
   private notificationService = inject(NotificationService);
 
   users: any[] = [];
-  roles: any[] = [];
+  readonly roleOptions = ['Admin', 'Customer'];
   isLoading = false;
   selectedRoles: { [userId: string]: string } = {};
 
   ngOnInit(): void {
     this.loadUsers();
-    this.loadRoles();
   }
 
   loadUsers(): void {
     this.isLoading = true;
     this.userService.getAll().subscribe({
       next: (data) => {
-        this.users = data;
-        this.users.forEach(u => { this.selectedRoles[u.id] = u.role ?? ''; });
+        this.users = (data ?? []).map((user: any) => this.normalizeUser(user));
+        this.selectedRoles = {};
+        this.users.forEach(u => {
+          const role = (u.role ?? '').toString().toLowerCase();
+          this.selectedRoles[u.id] = role === 'admin' ? 'Admin' : 'Customer';
+        });
         this.isLoading = false;
       },
       error: () => { this.isLoading = false; }
-    });
-  }
-
-  loadRoles(): void {
-    this.roleService.getAll().subscribe({
-      next: (data) => { this.roles = data; },
-      error: () => {}
     });
   }
 
@@ -56,10 +50,24 @@ export class UsersComponent implements OnInit {
   }
 
   delete(id: string): void {
+    if (!id) {
+      this.notificationService.error('Unable to delete user: missing user id');
+      return;
+    }
+
     if (!confirm('Delete this user?')) return;
     this.userService.delete(id).subscribe({
       next: () => { this.notificationService.success('User deleted'); this.loadUsers(); },
       error: () => this.notificationService.error('Delete failed')
     });
+  }
+
+  private normalizeUser(user: any): any {
+    return {
+      id: user.id ?? user.userId ?? user.UserId ?? '',
+      name: user.name ?? user.Name ?? '',
+      email: user.email ?? user.Email ?? '',
+      role: user.role ?? user.Role ?? 'Customer'
+    };
   }
 }

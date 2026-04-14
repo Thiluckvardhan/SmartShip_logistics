@@ -27,12 +27,18 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+    loadComponent: () => import('./features/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      }
+    ]
   },
   {
     path: 'shipments',
     canActivate: [authGuard],
-    canActivateChild: [authGuard],
+    loadComponent: () => import('./features/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
     children: [
       {
         path: '',
@@ -51,22 +57,41 @@ export const routes: Routes = [
   {
     path: 'tracking',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/tracking/tracking/tracking.component').then(m => m.TrackingComponent)
+    loadComponent: () => import('./features/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/tracking/tracking/tracking.component').then(m => m.TrackingComponent)
+      }
+    ]
   },
   {
     path: 'documents',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/documents/documents/documents.component').then(m => m.DocumentsComponent)
+    loadComponent: () => import('./features/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/documents/documents/documents.component').then(m => m.DocumentsComponent)
+      }
+    ]
   },
   {
     path: 'profile',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+    loadComponent: () => import('./features/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      }
+    ]
   },
   {
     path: 'admin',
     canActivate: [authGuard, adminGuard],
     canActivateChild: [authGuard, adminGuard],
+    loadComponent: () => import('./features/admin/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     children: [
       {
         path: '',
@@ -93,8 +118,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/exceptions/exceptions.component').then(m => m.ExceptionsComponent)
       },
       {
-        path: 'reports',
-        loadComponent: () => import('./features/admin/reports/reports.component').then(m => m.ReportsComponent)
+        path: 'documents',
+        loadComponent: () => import('./features/documents/documents/documents.component').then(m => m.DocumentsComponent)
       },
       {
         path: 'users',
@@ -103,6 +128,10 @@ export const routes: Routes = [
       {
         path: 'pickups',
         loadComponent: () => import('./features/admin/pickups/pickups.component').then(m => m.PickupsComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },

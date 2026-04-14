@@ -5,9 +5,14 @@ import { NotificationService } from '../services/notification.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
+  const skipErrorToast = req.headers.get('X-Skip-Error-Toast') === 'true';
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (skipErrorToast) {
+        return throwError(() => error);
+      }
+
       // 401 is handled by the authInterceptor directly to intercept and refresh token.
       if (error.status !== 401) {
         if (error.status === 403) {

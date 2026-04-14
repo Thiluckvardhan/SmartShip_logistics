@@ -7,9 +7,12 @@ import { environment } from '../../../environments/environment';
 import {
   UserProfile,
   LoginDto,
+  VerifyLoginOtpDto,
+  ResendLoginOtpDto,
   RegisterDto,
   TokenDto,
   GoogleLoginDto,
+  GoogleConfigResponse,
   ForgotPasswordDto,
   ResetPasswordDto,
   UpdateUserDto,
@@ -41,25 +44,40 @@ export class AuthService {
   login(dto: LoginDto): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/auth/login`, dto).pipe(
       tap(response => {
+        if (response.requiresOtp) {
+          return;
+        }
+
         this.storeTokens(response);
-        this.getMe().subscribe(user => {
-          localStorage.setItem('user_profile', JSON.stringify(user));
-          this.currentUserSubject.next(user);
-        });
+        this.hydrateCurrentUser();
       })
     );
+  }
+
+  verifyLoginOtp(dto: VerifyLoginOtpDto): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/api/auth/verify-login-otp`, dto).pipe(
+      tap(response => {
+        this.storeTokens(response);
+        this.hydrateCurrentUser();
+      })
+    );
+  }
+
+  resendLoginOtp(dto: ResendLoginOtpDto): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/api/auth/resend-login-otp`, dto);
   }
 
   googleLogin(dto: GoogleLoginDto): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/api/auth/google`, dto).pipe(
       tap(response => {
         this.storeTokens(response);
-        this.getMe().subscribe(user => {
-          localStorage.setItem('user_profile', JSON.stringify(user));
-          this.currentUserSubject.next(user);
-        });
+        this.hydrateCurrentUser();
       })
     );
+  }
+
+  getGoogleConfig(): Observable<GoogleConfigResponse> {
+    return this.http.get<GoogleConfigResponse>(`${this.apiUrl}/api/auth/google-config`);
   }
 
   refreshToken(token: string): Observable<AuthResponse> {
@@ -98,7 +116,19 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token');
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // exp is in seconds; Date.now() is in ms
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        this.clearStorage();
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getRole(): string | null {
@@ -136,5 +166,17 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_profile');
     this.currentUserSubject.next(null);
+  }
+
+  private hydrateCurrentUser(): void {
+    this.getMe().subscribe({
+      next: (user) => {
+        localStorage.setItem('user_profile', JSON.stringify(user));
+        this.currentUserSubject.next(user);
+      },
+      error: () => {
+        this.clearStorage();
+      }
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
@@ -14,14 +14,22 @@ export class TrackingService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
+  private getRequestOptions(silent = false): { headers?: HttpHeaders } {
+    if (!silent) return {};
+
+    return {
+      headers: new HttpHeaders({ 'X-Skip-Error-Toast': 'true' })
+    };
+  }
+
   /** GET /api/tracking/{tn} */
-  getByTrackingNumber(tn: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/tracking/${tn}`);
+  getByTrackingNumber(tn: string, silent = false): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/tracking/${tn}`, this.getRequestOptions(silent));
   }
 
   /** GET /api/tracking/{tn}/timeline */
-  getTimeline(tn: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/tracking/${tn}/timeline`);
+  getTimeline(tn: string, silent = false): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/tracking/${tn}/timeline`, this.getRequestOptions(silent));
   }
 
   /** GET /api/tracking/{tn}/events */
@@ -30,8 +38,8 @@ export class TrackingService {
   }
 
   /** GET /api/tracking/location/{tn} */
-  getCurrentLocation(tn: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/tracking/location/${tn}`);
+  getCurrentLocation(tn: string, silent = false): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/tracking/location/${tn}`, this.getRequestOptions(silent));
   }
 
   /** GET /api/tracking/{tn}/status */

@@ -89,28 +89,12 @@ export class AdminService {
     return this.http.get(`${this.apiUrl}/api/admin/shipments/${id}`);
   }
 
+  getUserById(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/users/${id}`);
+  }
+
   getShipmentsByHub(hubId: string, page = 1, size = 5): Observable<any> {
     const params = new HttpParams().set('pageNumber', page).set('pageSize', size);
     return this.http.get(`${this.apiUrl}/api/admin/shipments/hub/${hubId}`, { params });
-  }
-
-  getReports(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/admin/reports`);
-  }
-
-  getShipmentPerformanceReport(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/admin/reports/shipment-performance`);
-  }
-
-  getDeliverySlaReport(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/admin/reports/delivery-sla`);
-  }
-
-  getRevenueReport(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/admin/reports/revenue`);
-  }
-
-  getHubPerformanceReport(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/api/admin/reports/hub-performance`);
   }
 }

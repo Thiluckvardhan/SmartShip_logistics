@@ -1,12 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ShipmentService } from '../services/shipment.service';
 
 @Component({
   selector: 'app-shipment-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './shipment-list.component.html',
   styleUrls: ['./shipment-list.component.css']
 })
@@ -18,54 +19,60 @@ export class ShipmentListComponent implements OnInit {
   isLoading = true;
   pageSize = 10;
   currentPage = 1;
+  searchQuery = '';
+  statusFilter = '';
+
+  readonly statuses = ['Draft', 'Booked', 'PickedUp', 'InTransit', 'OutForDelivery', 'Delivered', 'Delayed', 'Failed', 'Returned'];
 
   ngOnInit(): void {
     this.shipmentService.getAll().subscribe({
       next: (data) => {
-        this.shipments = data;
+        const items = data ?? [];
+        this.shipments = items.map((shipment: any) => this.normalizeShipment(shipment));
         this.isLoading = false;
       },
-      error: () => {
-        this.isLoading = false;
-      }
+      error: () => { this.isLoading = false; }
     });
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.shipments.length / this.pageSize);
+  get filteredShipments(): any[] {
+    return this.shipments.filter(s => {
+      const matchSearch = !this.searchQuery || (s.trackingNumber ?? '').toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchStatus = !this.statusFilter || s.status === this.statusFilter;
+      return matchSearch && matchStatus;
+    });
   }
 
-  get pagedShipments(): any[] {
+  get totalFilteredPages(): number {
+    return Math.ceil(this.filteredShipments.length / this.pageSize) || 1;
+  }
+
+  get pagedFiltered(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
-    return this.shipments.slice(start, start + this.pageSize);
+    return this.filteredShipments.slice(start, start + this.pageSize);
   }
 
-  get pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
+  prevPage(): void { if (this.currentPage > 1) this.currentPage--; }
+  nextPage(): void { if (this.currentPage < this.totalFilteredPages) this.currentPage++; }
 
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
+  get totalPages(): number { return this.totalFilteredPages; }
+  get pagedShipments(): any[] { return this.pagedFiltered; }
+  get pages(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i + 1); }
+  goToPage(page: number): void { if (page >= 1 && page <= this.totalPages) this.currentPage = page; }
+  getStatusClass(status: string): string { return 'status-' + (status ?? '').toLowerCase(); }
+  viewShipment(id: string): void { this.router.navigate(['/shipments', id]); }
 
-  getStatusClass(status: string): string {
-    const map: Record<string, string> = {
-      Draft: 'badge-draft',
-      Booked: 'badge-booked',
-      PickedUp: 'badge-pickedup',
-      InTransit: 'badge-intransit',
-      OutForDelivery: 'badge-outfordelivery',
-      Delivered: 'badge-delivered',
-      Delayed: 'badge-delayed',
-      Failed: 'badge-failed',
-      Returned: 'badge-returned'
+  private normalizeShipment(shipment: any): any {
+    return {
+      ...shipment,
+      id: shipment.id ?? shipment.shipmentId ?? shipment.ShipmentId ?? '',
+      trackingNumber: shipment.trackingNumber ?? shipment.TrackingNumber ?? '',
+      status: shipment.status ?? shipment.Status ?? '',
+      createdAt: shipment.createdAt ?? shipment.CreatedAt,
+      senderAddress: shipment.senderAddress ?? shipment.SenderAddress,
+      receiverAddress: shipment.receiverAddress ?? shipment.ReceiverAddress,
+      senderName: shipment.senderName ?? shipment.SenderName,
+      receiverName: shipment.receiverName ?? shipment.ReceiverName
     };
-    return map[status] ?? 'badge-default';
-  }
-
-  viewShipment(id: string): void {
-    this.router.navigate(['/shipments', id]);
   }
 }

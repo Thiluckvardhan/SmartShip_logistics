@@ -29,7 +29,7 @@ export class ShipmentDetailComponent implements OnInit {
   private loadShipment(): void {
     this.shipmentService.getById(this.id).subscribe({
       next: (data) => {
-        this.shipment = data;
+        this.shipment = this.normalizeShipment(data);
         this.isLoading = false;
       },
       error: () => {
@@ -62,5 +62,48 @@ export class ShipmentDetailComponent implements OnInit {
         this.notificationService.error('Failed to delete shipment.');
       }
     });
+  }
+
+  private normalizeShipment(shipment: any): any {
+    if (!shipment) return null;
+
+    return {
+      ...shipment,
+      id: shipment.id ?? shipment.shipmentId ?? shipment.ShipmentId ?? '',
+      trackingNumber: shipment.trackingNumber ?? shipment.TrackingNumber ?? '',
+      status: shipment.status ?? shipment.Status ?? '',
+      totalWeight: shipment.totalWeight ?? shipment.TotalWeight ?? 0,
+      estimatedRate: shipment.estimatedRate ?? shipment.EstimatedRate ?? shipment.cost ?? shipment.Cost ?? 0,
+      senderAddress: this.normalizeAddress(shipment.senderAddress ?? shipment.SenderAddress),
+      receiverAddress: this.normalizeAddress(shipment.receiverAddress ?? shipment.ReceiverAddress),
+      items: this.normalizeItems(shipment.items ?? shipment.Items ?? shipment.packages ?? shipment.Packages)
+    };
+  }
+
+  private normalizeAddress(address: any): any {
+    if (!address) return null;
+
+    return {
+      ...address,
+      name: address.name ?? address.Name ?? '',
+      phone: address.phone ?? address.Phone ?? '',
+      street: address.street ?? address.Street ?? '',
+      city: address.city ?? address.City ?? '',
+      state: address.state ?? address.State ?? '',
+      country: address.country ?? address.Country ?? '',
+      pincode: address.pincode ?? address.postalCode ?? address.PostalCode ?? ''
+    };
+  }
+
+  private normalizeItems(items: any): any[] {
+    const source = Array.isArray(items) ? items : [];
+
+    return source.map((item: any) => ({
+      ...item,
+      itemName: item.itemName ?? item.ItemName ?? '',
+      quantity: item.quantity ?? item.Quantity ?? 0,
+      weight: item.weight ?? item.Weight ?? 0,
+      description: item.description ?? item.Description ?? ''
+    }));
   }
 }

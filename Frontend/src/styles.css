@@ -1,18 +1,38 @@
 /* CSS Custom Properties */
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
+  /* Brand */
+  --primary: #4F46E5;
+  --primary-dark: #1E3A8A;
+  --primary-light: #EEF2FF;
+  --accent: #F97316;
+  --accent-dark: #EA580C;
+
+  /* Semantic */
   --secondary: #64748b;
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
-  --background: #f8fafc;
+
+  /* Surface */
+  --background: #F8FAFC;
   --surface: #ffffff;
-  --border: #e2e8f0;
+  --border: #E5E7EB;
+
+  /* Text */
   --text-primary: #0f172a;
   --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Misc */
   --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
   --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  /* Auth gradient */
+  --auth-gradient: linear-gradient(135deg, #4F46E5 0%, #1E3A8A 100%);
 }
 
 /* Base Reset */

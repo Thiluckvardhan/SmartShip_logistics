@@ -1,47 +1,130 @@
-<div class="shipment-detail">
-  <a routerLink="/admin/shipments" class="back-link">← Back to Shipments</a>
+<!-- Breadcrumb -->
+<nav class="breadcrumb">
+  <a routerLink="/admin">Dashboard</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <a routerLink="/admin/shipments">Shipments</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span>Detail</span>
+</nav>
 
-  <div *ngIf="isLoading" class="loading">Loading...</div>
+<!-- Skeleton -->
+<div *ngIf="isLoading" class="skeleton-wrap">
+  <div class="skeleton-header"></div>
+  <div class="skeleton-grid">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+</div>
 
-  <div *ngIf="!isLoading && shipment">
-    <h1 class="page-title">Shipment {{ shipment.trackingNumber }}</h1>
-
-    <div class="detail-grid">
-      <div class="detail-card">
-        <h2>Shipment Info</h2>
-        <div class="detail-row"><span>Status</span><span class="badge">{{ shipment.status }}</span></div>
-        <div class="detail-row"><span>Tracking #</span><span>{{ shipment.trackingNumber }}</span></div>
-        <div class="detail-row"><span>Created</span><span>{{ shipment.createdAt | date:'medium' }}</span></div>
+<!-- Content -->
+<div *ngIf="!isLoading && shipment">
+  <div class="detail-header">
+    <div class="detail-header-left">
+      <div class="tracking-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        </svg>
+        {{ shipment.trackingNumber }}
       </div>
-
-      <div class="detail-card" *ngIf="shipment.senderAddress">
-        <h2>Sender</h2>
-        <div class="detail-row"><span>Name</span><span>{{ shipment.senderAddress.name }}</span></div>
-        <div class="detail-row"><span>Phone</span><span>{{ shipment.senderAddress.phone }}</span></div>
-        <div class="detail-row"><span>Address</span><span>{{ shipment.senderAddress.street }}, {{ shipment.senderAddress.city }}</span></div>
-      </div>
-
-      <div class="detail-card" *ngIf="shipment.receiverAddress">
-        <h2>Receiver</h2>
-        <div class="detail-row"><span>Name</span><span>{{ shipment.receiverAddress.name }}</span></div>
-        <div class="detail-row"><span>Phone</span><span>{{ shipment.receiverAddress.phone }}</span></div>
-        <div class="detail-row"><span>Address</span><span>{{ shipment.receiverAddress.street }}, {{ shipment.receiverAddress.city }}</span></div>
-      </div>
+      <span class="status-badge" [ngClass]="'status-' + (shipment.status | lowercase)">{{ shipment.status }}</span>
     </div>
-
-    <!-- Status Action Buttons -->
-    <div class="actions-section">
-      <h2>Update Status</h2>
-      <div class="action-buttons">
-        <button class="btn btn-secondary" (click)="action('pickup')">Picked Up</button>
-        <button class="btn btn-secondary" (click)="action('in-transit')">In Transit</button>
-        <button class="btn btn-secondary" (click)="action('out-for-delivery')">Out for Delivery</button>
-        <button class="btn btn-success" (click)="action('delivered')">Delivered</button>
-        <button class="btn btn-warning" (click)="action('delay')">Delay</button>
-        <button class="btn btn-danger" (click)="action('return')">Return</button>
-      </div>
+    <div class="creator-meta" *ngIf="creator">
+      <p class="creator-label">Created By</p>
+      <p class="creator-name">{{ creator.name }}</p>
+      <p class="creator-email">{{ creator.email }}</p>
     </div>
   </div>
 
-  <div *ngIf="!isLoading && !shipment" class="empty">Shipment not found.</div>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <p class="summary-label">Total Weight</p>
+      <p class="summary-value">{{ shipment.totalWeight ?? 0 }} kg</p>
+    </div>
+    <div class="summary-card">
+      <p class="summary-label">Estimated Cost</p>
+      <p class="summary-value">₹{{ (shipment.estimatedRate ?? 0) | number:'1.2-2' }}</p>
+    </div>
+  </div>
+
+  <div class="address-grid">
+    <div class="address-card">
+      <div class="address-card-header">
+        <div class="addr-icon addr-from">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <span>From</span>
+      </div>
+      <p class="addr-name">{{ shipment.senderAddress?.name }}</p>
+      <p class="addr-line">{{ shipment.senderAddress?.phone }}</p>
+      <p class="addr-line">{{ shipment.senderAddress?.street }}</p>
+      <p class="addr-line">{{ shipment.senderAddress?.city }}, {{ shipment.senderAddress?.state }}</p>
+      <p class="addr-line">{{ shipment.senderAddress?.country }} — {{ shipment.senderAddress?.pincode }}</p>
+    </div>
+
+    <div class="address-card">
+      <div class="address-card-header">
+        <div class="addr-icon addr-to">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <span>To</span>
+      </div>
+      <p class="addr-name">{{ shipment.receiverAddress?.name }}</p>
+      <p class="addr-line">{{ shipment.receiverAddress?.phone }}</p>
+      <p class="addr-line">{{ shipment.receiverAddress?.street }}</p>
+      <p class="addr-line">{{ shipment.receiverAddress?.city }}, {{ shipment.receiverAddress?.state }}</p>
+      <p class="addr-line">{{ shipment.receiverAddress?.country }} — {{ shipment.receiverAddress?.pincode }}</p>
+    </div>
+  </div>
+
+  <div class="items-card">
+    <div class="items-header">
+      <h2>Items</h2>
+      <span class="item-count">{{ shipment.items?.length ?? 0 }} item{{ (shipment.items?.length ?? 0) !== 1 ? 's' : '' }}</span>
+    </div>
+    <table class="ss-table" *ngIf="shipment.items?.length > 0">
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Qty</th>
+          <th>Weight (kg)</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of shipment.items">
+          <td class="item-name">{{ item.itemName }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.weight }}</td>
+          <td class="muted">{{ item.description ?? '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-items" *ngIf="!shipment.items?.length">No items listed.</div>
+  </div>
+
+  <div class="actions-section">
+    <h2>Update Status</h2>
+    <div class="action-buttons">
+      <button class="btn btn-secondary" (click)="action('pickup')">Picked Up</button>
+      <button class="btn btn-secondary" (click)="action('in-transit')">In Transit</button>
+      <button class="btn btn-secondary" (click)="action('out-for-delivery')">Out for Delivery</button>
+      <button class="btn btn-success" (click)="action('delivered')">Delivered</button>
+      <button class="btn btn-warning" (click)="action('delay')">Delay</button>
+      <button class="btn btn-danger" (click)="action('return')">Return</button>
+    </div>
+  </div>
+</div>
+
+<!-- Not found -->
+<div class="not-found" *ngIf="!isLoading && !shipment">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+  <p>Shipment not found.</p>
+  <a routerLink="/admin/shipments" class="btn-back">← Back to Shipments</a>
 </div>

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
 import { ShipmentService } from '../../shipments/services/shipment.service';
@@ -17,6 +17,7 @@ export class AdminShipmentsComponent implements OnInit {
   private adminService = inject(AdminService);
   private shipmentService = inject(ShipmentService);
   private notificationService = inject(NotificationService);
+  private router = inject(Router);
 
   shipments: any[] = [];
   page = 1;
@@ -25,7 +26,7 @@ export class AdminShipmentsComponent implements OnInit {
   statusFilter = '';
   isLoading = false;
 
-  readonly statuses = ['', 'Draft', 'Booked', 'PickedUp', 'InTransit', 'OutForDelivery', 'Delivered', 'Delayed', 'Failed', 'Returned'];
+  readonly statuses = ['', 'Booked', 'PickedUp', 'InTransit', 'OutForDelivery', 'Delivered', 'Failed', 'Returned', 'Delayed'];
 
   ngOnInit(): void {
     this.load();
@@ -35,7 +36,8 @@ export class AdminShipmentsComponent implements OnInit {
     this.isLoading = true;
     this.adminService.getShipments(this.page, this.pageSize).subscribe({
       next: (res) => {
-        this.shipments = res.items ?? res ?? [];
+        const items = res.items ?? res ?? [];
+        this.shipments = items.map((shipment: any) => this.normalizeShipment(shipment));
         this.totalItems = res.totalCount ?? this.shipments.length;
         this.isLoading = false;
       },
@@ -60,13 +62,28 @@ export class AdminShipmentsComponent implements OnInit {
     if (this.page < this.totalPages) { this.page++; this.load(); }
   }
 
+  viewShipment(id: string): void {
+    if (!id) {
+      this.notificationService.error('Unable to open shipment: missing shipment id');
+      return;
+    }
+
+    this.router.navigate(['/admin/shipments', id]);
+  }
+
   updateStatus(id: string, action: string): void {
+    if (!id) {
+      this.notificationService.error('Unable to update status: missing shipment id');
+      return;
+    }
+
     let call$;
     switch (action) {
       case 'pickup': call$ = this.shipmentService.markPickedUp(id); break;
       case 'in-transit': call$ = this.shipmentService.markInTransit(id); break;
       case 'out-for-delivery': call$ = this.shipmentService.markOutForDelivery(id); break;
       case 'delivered': call$ = this.shipmentService.markDelivered(id); break;
+      case 'failed': call$ = this.shipmentService.markFailed(id); break;
       case 'delay': call$ = this.shipmentService.markDelayed(id); break;
       case 'return': call$ = this.shipmentService.markReturned(id); break;
       default: return;
@@ -75,5 +92,17 @@ export class AdminShipmentsComponent implements OnInit {
       next: () => { this.notificationService.success('Status updated'); this.load(); },
       error: () => this.notificationService.error('Failed to update status')
     });
+  }
+
+  private normalizeShipment(shipment: any): any {
+    return {
+      ...shipment,
+      id: shipment.id ?? shipment.shipmentId ?? shipment.ShipmentId ?? '',
+      trackingNumber: shipment.trackingNumber ?? shipment.TrackingNumber ?? '',
+      status: shipment.status ?? shipment.Status ?? '',
+      createdAt: shipment.createdAt ?? shipment.CreatedAt,
+      senderAddress: shipment.senderAddress ?? shipment.SenderAddress,
+      receiverAddress: shipment.receiverAddress ?? shipment.ReceiverAddress
+    };
   }
 }

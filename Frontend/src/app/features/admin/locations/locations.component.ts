@@ -39,7 +39,8 @@ export class LocationsComponent implements OnInit {
     this.isLoading = true;
     this.adminService.getLocations(this.page, this.pageSize).subscribe({
       next: (res) => {
-        this.locations = res.items ?? res ?? [];
+        const items = res.items ?? res ?? [];
+        this.locations = items.map((location: any) => this.normalizeLocation(location));
         this.totalItems = res.totalCount ?? this.locations.length;
         this.isLoading = false;
       },
@@ -62,7 +63,12 @@ export class LocationsComponent implements OnInit {
 
   openEdit(loc: any): void {
     this.editingId = loc.id;
-    this.form.patchValue(loc);
+    this.form.patchValue({
+      hubId: loc.hubId,
+      name: loc.name,
+      zipCode: loc.zipCode,
+      isActive: loc.isActive
+    });
     this.showForm = true;
   }
 
@@ -89,10 +95,25 @@ export class LocationsComponent implements OnInit {
   }
 
   delete(id: string): void {
+    if (!id) {
+      this.notificationService.error('Unable to delete location: missing location id');
+      return;
+    }
+
     if (!confirm('Delete this location?')) return;
     this.adminService.deleteLocation(id).subscribe({
       next: () => { this.notificationService.success('Location deleted'); this.load(); },
       error: () => this.notificationService.error('Delete failed')
     });
+  }
+
+  private normalizeLocation(location: any): any {
+    return {
+      id: location.id ?? location.locationId ?? location.LocationId ?? '',
+      hubId: location.hubId ?? location.HubId ?? '',
+      name: location.name ?? location.Name ?? '',
+      zipCode: location.zipCode ?? location.ZipCode ?? '',
+      isActive: location.isActive ?? location.IsActive ?? false
+    };
   }
 }

@@ -41,7 +41,8 @@ export class HubsComponent implements OnInit {
     this.isLoading = true;
     this.adminService.getHubs(this.page, this.pageSize).subscribe({
       next: (res) => {
-        this.hubs = res.items ?? res ?? [];
+        const items = res.items ?? res ?? [];
+        this.hubs = items.map((hub: any) => this.normalizeHub(hub));
         this.totalItems = res.totalCount ?? this.hubs.length;
         this.isLoading = false;
       },
@@ -64,7 +65,14 @@ export class HubsComponent implements OnInit {
 
   openEdit(hub: any): void {
     this.editingId = hub.id;
-    this.form.patchValue(hub);
+    this.form.patchValue({
+      name: hub.name,
+      address: hub.address,
+      contactNumber: hub.contactNumber,
+      managerName: hub.managerName,
+      email: hub.email,
+      isActive: hub.isActive
+    });
     this.showForm = true;
   }
 
@@ -91,10 +99,26 @@ export class HubsComponent implements OnInit {
   }
 
   delete(id: string): void {
+    if (!id) {
+      this.notificationService.error('Unable to delete hub: missing hub id');
+      return;
+    }
     if (!confirm('Delete this hub?')) return;
     this.adminService.deleteHub(id).subscribe({
       next: () => { this.notificationService.success('Hub deleted'); this.load(); },
       error: () => this.notificationService.error('Delete failed')
     });
+  }
+
+  private normalizeHub(hub: any): any {
+    return {
+      id: hub.id ?? hub.hubId ?? hub.HubId ?? '',
+      name: hub.name ?? hub.Name ?? '',
+      address: hub.address ?? hub.Address ?? '',
+      contactNumber: hub.contactNumber ?? hub.ContactNumber ?? '',
+      managerName: hub.managerName ?? hub.ManagerName ?? '',
+      email: hub.email ?? hub.Email ?? '',
+      isActive: hub.isActive ?? hub.IsActive ?? false
+    };
   }
 }

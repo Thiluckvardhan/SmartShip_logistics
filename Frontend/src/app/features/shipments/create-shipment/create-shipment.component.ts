@@ -17,8 +17,32 @@ export class CreateShipmentComponent {
   private shipmentService = inject(ShipmentService);
   private router = inject(Router);
   private notificationService = inject(NotificationService);
+  private readonly ratePerKg = 10;
 
   isSubmitting = false;
+  currentStep = 0; // 0=Sender, 1=Receiver, 2=Items, 3=Review
+  readonly steps = ['Sender', 'Receiver', 'Items', 'Review'];
+
+  nextStep(): void { if (this.currentStep < 3) this.currentStep++; }
+  prevStep(): void { if (this.currentStep > 0) this.currentStep--; }
+
+  get senderValid(): boolean { return this.senderAddress.valid; }
+  get receiverValid(): boolean { return this.receiverAddress.valid; }
+  get itemsValid(): boolean { return this.items.valid; }
+
+  get totalWeight(): number {
+    const items = (this.form.value.items ?? []) as Array<{ quantity?: number; weight?: number }>;
+    const total = items.reduce((sum, item) => {
+      const quantity = Number(item.quantity ?? 0);
+      const weight = Number(item.weight ?? 0);
+      return sum + (quantity * weight);
+    }, 0);
+    return Number(total.toFixed(2));
+  }
+
+  get totalPrice(): number {
+    return Number((this.totalWeight * this.ratePerKg).toFixed(2));
+  }
 
   form: FormGroup = this.fb.group({
     senderAddress: this.buildAddressGroup(),

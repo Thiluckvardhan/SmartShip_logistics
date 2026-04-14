@@ -1,72 +1,108 @@
-<div class="tracking-page">
-  <h1 class="page-title">Track Shipment</h1>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Track Shipment</h1>
+    <p class="page-sub">Enter your tracking number to get real-time updates.</p>
+  </div>
+</div>
 
-  <!-- Search bar -->
-  <form [formGroup]="form" (ngSubmit)="onSearch()" class="search-bar">
-    <input
-      type="text"
-      formControlName="trackingNumber"
-      placeholder="Enter tracking number"
-      class="search-input"
-      [class.input-error]="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
-    />
-    <button type="submit" class="btn-primary" [disabled]="form.invalid || isLoading">
+<!-- Search Card -->
+<div class="search-card">
+  <form [formGroup]="form" (ngSubmit)="onSearch()" class="search-form">
+    <div class="search-input-wrap" [class.error]="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      <input type="text" formControlName="trackingNumber" placeholder="Enter tracking number (e.g. SS-20240101-XXXX)" class="search-input"/>
+    </div>
+    <button type="submit" class="btn-track" [disabled]="form.invalid || isLoading">
+      <span class="spinner" *ngIf="isLoading"></span>
       {{ isLoading ? 'Searching...' : 'Track' }}
     </button>
   </form>
-  <span
-    class="field-error"
-    *ngIf="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched"
-  >
-    Tracking number is required.
-  </span>
+  <div class="field-error" *ngIf="form.get('trackingNumber')?.invalid && form.get('trackingNumber')?.touched">
+    Please enter a tracking number.
+  </div>
+</div>
 
-  <!-- Tracking info card -->
-  <div class="info-card" *ngIf="trackingData">
-    <div class="info-header">
-      <div>
-        <p class="info-label">Tracking Number</p>
-        <p class="info-value">{{ trackingData.trackingNumber }}</p>
-      </div>
-      <span class="status-badge">{{ trackingData.status }}</span>
-    </div>
+<!-- Empty prompt -->
+<div class="empty-prompt" *ngIf="!isLoading && !trackingData">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+  </svg>
+  <p>Enter a tracking number above to see shipment status.</p>
+</div>
 
-    <div class="info-grid" *ngIf="currentLocation">
-      <div>
-        <p class="info-label">Current Location</p>
-        <p class="info-value">
-          {{ currentLocation.latitude }}, {{ currentLocation.longitude }}
-        </p>
+<!-- Result -->
+<div *ngIf="trackingData">
+
+  <!-- Status Card -->
+  <div class="status-card">
+    <div class="status-card-left">
+      <div class="status-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
       </div>
-      <div *ngIf="currentLocation.timestamp">
-        <p class="info-label">Last Updated</p>
-        <p class="info-value">{{ currentLocation.timestamp | date:'medium' }}</p>
+      <div>
+        <p class="tracking-num">{{ trackingData.trackingNumber }}</p>
+        <p class="tracking-sub">Shipment ID</p>
       </div>
     </div>
+    <span class="status-badge" [ngClass]="'status-' + (trackingData.status | lowercase)">
+      {{ trackingData.status }}
+    </span>
   </div>
 
-  <!-- Timeline -->
-  <div class="timeline-section" *ngIf="timeline.length > 0">
-    <h2 class="section-title">Shipment Timeline</h2>
-    <div class="timeline">
-      <div class="timeline-line"></div>
-      <div class="timeline-item" *ngFor="let event of timeline; let last = last">
-        <div class="event-dot" [class.event-dot-last]="last"></div>
-        <div class="event-card">
-          <div class="event-header">
-            <span class="event-status">{{ event.status }}</span>
-            <span class="event-time">{{ event.timestamp | date:'medium' }}</span>
+  <!-- Journey Stepper -->
+  <div class="journey-card">
+    <h2 class="journey-title">Shipment Journey</h2>
+    <div class="journey-steps">
+      <div *ngFor="let step of journeySteps; let last = last" class="journey-step"
+           [class.completed]="isStepCompleted(step.status)"
+           [class.current]="isCurrentStep(step.status)">
+        <div class="journey-dot-wrap">
+          <div class="journey-dot">
+            <svg *ngIf="isStepCompleted(step.status)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <div *ngIf="isCurrentStep(step.status)" class="dot-pulse"></div>
           </div>
-          <p class="event-location" *ngIf="event.location">
-            <span class="location-icon">📍</span> {{ event.location }}
-          </p>
-          <p class="event-desc" *ngIf="event.description">{{ event.description }}</p>
+          <div class="journey-line" *ngIf="!last"></div>
+        </div>
+        <div class="journey-info">
+          <span class="journey-label">{{ step.label }}</span>
+          <span class="journey-sub" *ngIf="isCurrentStep(step.status)">Current status</span>
+          <span class="journey-sub" *ngIf="isStepCompleted(step.status)">Completed</span>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="empty-state" *ngIf="!isLoading && !trackingData">
-    <p>Enter a tracking number above to see shipment details.</p>
+  <!-- Timeline Events -->
+  <div class="timeline-card" *ngIf="timeline.length > 0">
+    <h2 class="timeline-title">Event History</h2>
+    <div class="timeline">
+      <div *ngFor="let event of timeline; let last = last" class="tl-item">
+        <div class="tl-left">
+          <div class="tl-dot"></div>
+          <div class="tl-line" *ngIf="!last"></div>
+        </div>
+        <div class="tl-body">
+          <div class="tl-header">
+            <span class="tl-status">{{ event.status }}</span>
+            <span class="tl-time">{{ event.timestamp | date:'MMM d, y · h:mm a' }}</span>
+          </div>
+          <p class="tl-location" *ngIf="event.location">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            {{ event.location }}
+          </p>
+          <p class="tl-desc" *ngIf="event.description">{{ event.description }}</p>
+        </div>
+      </div>
+    </div>
   </div>
+
 </div>
