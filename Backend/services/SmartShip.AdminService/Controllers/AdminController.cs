@@ -127,26 +127,4 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpGet("shipments/hub/{hubId:guid}")]
     public async Task<IActionResult> GetShipmentsByHub(Guid hubId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
         => Ok(await adminService.GetShipmentsByHubPagedAsync(hubId, pageNumber, pageSize));
-
-    // ── Reports ─────────────────────────────────────────────
-
-    [HttpGet("reports")]
-    public async Task<IActionResult> GetReports()
-        => Ok(await adminService.GetReportsAsync());
-
-    [HttpGet("reports/shipment-performance")]
-    public async Task<IActionResult> GetShipmentPerformanceReport()
-        => Ok(await adminService.GetShipmentPerformanceReportAsync());
-
-    [HttpGet("reports/delivery-sla")]
-    public async Task<IActionResult> GetDeliverySlaReport()
-        => Ok(await adminService.GetDeliverySlaReportAsync());
-
-    [HttpGet("reports/revenue")]
-    public async Task<IActionResult> GetRevenueReport()
-        => Ok(await adminService.GetRevenueReportAsync());
-
-    [HttpGet("reports/hub-performance")]
-    public async Task<IActionResult> GetHubPerformanceReport()
-        => Ok(await adminService.GetHubPerformanceReportAsync());
 }

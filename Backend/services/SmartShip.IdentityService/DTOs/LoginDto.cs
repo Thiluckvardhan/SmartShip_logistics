@@ -11,6 +11,18 @@ public record LoginDto(
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
     string Password);
 
+public record VerifyLoginOtpDto(
+    [Required(ErrorMessage = "Challenge ID is required.")]
+    string ChallengeId,
+
+    [Required(ErrorMessage = "OTP is required.")]
+    [RegularExpression("^[0-9]{6}$", ErrorMessage = "OTP must be a 6-digit number.")]
+    string Otp);
+
+public record ResendLoginOtpDto(
+    [Required(ErrorMessage = "Challenge ID is required.")]
+    string ChallengeId);
+
 public record TokenDto(
     [Required(ErrorMessage = "Token is required.")]
     string Token);

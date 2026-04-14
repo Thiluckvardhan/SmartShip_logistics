@@ -32,11 +32,4 @@ public interface IAdminService
     Task<object> GetShipmentsPagedAsync(int pageNumber, int pageSize);
     Task<object?> GetShipmentAsync(Guid id);
     Task<object> GetShipmentsByHubPagedAsync(Guid hubId, int pageNumber, int pageSize);
-
-    // Reports
-    Task<object> GetReportsAsync();
-    Task<object> GetShipmentPerformanceReportAsync();
-    Task<object> GetDeliverySlaReportAsync();
-    Task<object> GetRevenueReportAsync();
-    Task<object> GetHubPerformanceReportAsync();
 }

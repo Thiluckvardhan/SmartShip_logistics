@@ -56,6 +56,18 @@ public class DocumentsController(IDocumentService documentService, IWebHostEnvir
         return item is null ? NotFound(new { message = "Document not found." }) : Ok(item);
     }
 
+    [HttpGet("{id:guid}/download")]
+    public async Task<IActionResult> DownloadDocument(Guid id)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var file = await documentService.DownloadDocumentAsync(id, userId, User.IsInRole("Admin"));
+        return file is null
+            ? NotFound(new { message = "Document not found." })
+            : File(file.Value.Content, file.Value.ContentType, file.Value.FileName);
+    }
+
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateDocument(Guid id, [FromForm] UpdateDocumentDto request)
     {

@@ -1,10 +1,12 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SmartShip.Core.Exceptions;
+using SmartShip.Core.Email;
 using SmartShip.Core.Messaging;
 using SmartShip.Core.Observability;
 using SmartShip.ShipmentService.Data;
@@ -12,6 +14,7 @@ using SmartShip.ShipmentService.Repositories;
 using SmartShip.ShipmentService.Services;
 using Serilog;
 
+LoadDotEnvIntoEnvironment(Directory.GetCurrentDirectory());
 var builder = WebApplication.CreateBuilder(args);
 
 var solutionRoot = ResolveSolutionRoot(builder.Environment.ContentRootPath);
@@ -101,6 +104,15 @@ builder.Services.AddDbContext<ShipmentDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SmartShip.ShipmentService")));
 builder.Services.AddScoped<IShipmentRepository, ShipmentRepository>();
 builder.Services.AddScoped<IShipmentService, ShipmentService>();
+builder.Services.AddSingleton<IServiceTokenGenerator, ServiceTokenGenerator>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddHttpClient("IdentityService", client =>
+{
+    var baseUrl = builder.Configuration["Services:IdentityServiceBaseUrl"] ?? "http://localhost:8001";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestVersion = HttpVersion.Version11;
+    client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+});
 builder.Services.AddSingleton<IEventBus, RabbitMQService>();
 builder.Services.AddHostedService<OutboxPublisherService>();
 
@@ -166,4 +178,57 @@ static string ResolveSolutionRoot(string contentRoot)
     }
 
     return contentRoot;
+}
+
+static void LoadDotEnvIntoEnvironment(string startPath)
+{
+    var envFilePath = FindFileInParents(startPath, ".env");
+    if (envFilePath is null || !File.Exists(envFilePath))
+    {
+        return;
+    }
+
+    foreach (var rawLine in File.ReadLines(envFilePath))
+    {
+        var line = rawLine.Trim();
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+        {
+            continue;
+        }
+
+        var separator = line.IndexOf('=');
+        if (separator <= 0)
+        {
+            continue;
+        }
+
+        var key = line[..separator].Trim();
+        var value = line[(separator + 1)..].Trim().Trim('"');
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            continue;
+        }
+
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}
+
+static string? FindFileInParents(string startPath, string fileName)
+{
+    var current = new DirectoryInfo(startPath);
+    while (current is not null)
+    {
+        var candidate = Path.Combine(current.FullName, fileName);
+        if (File.Exists(candidate))
+        {
+            return candidate;
+        }
+
+        current = current.Parent;
+    }
+
+    return null;
 }

@@ -53,6 +53,12 @@ services:
       Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: ${JWT_ISSUER}
       Jwt__Audience: ${JWT_AUDIENCE}
+      Services__IdentityServiceBaseUrl: http://identity-service:8080
+      EmailSettings__SmtpHost: ${EMAIL_SMTP_HOST}
+      EmailSettings__Port: 587
+      EmailSettings__EnableSsl: "true"
+      EmailSettings__SenderEmail: ${EMAIL_SENDER}
+      EmailSettings__SenderPassword: ${EMAIL_PASSWORD}
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Username: ${RABBITMQ_USERNAME}
       RabbitMQ__Password: ${RABBITMQ_PASSWORD}

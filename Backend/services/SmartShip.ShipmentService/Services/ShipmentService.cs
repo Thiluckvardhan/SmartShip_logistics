@@ -2,13 +2,23 @@ using SmartShip.ShipmentService.DTOs;
 using SmartShip.ShipmentService.Models;
 using SmartShip.ShipmentService.Repositories;
 using SmartShip.Contracts.Events;
+using SmartShip.Core.Email;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
 
 namespace SmartShip.ShipmentService.Services;
 
-public class ShipmentService(IShipmentRepository repository) : IShipmentService
+public class ShipmentService(
+    IShipmentRepository repository,
+    IHttpClientFactory httpClientFactory,
+    IEmailService emailService,
+    IServiceTokenGenerator serviceTokenGenerator,
+    ILogger<ShipmentService> logger) : IShipmentService
 {
     private const decimal DomesticRateMultiplier = 10.0m;
+    private readonly HttpClient _identityClient = httpClientFactory.CreateClient("IdentityService");
 
     private static readonly Dictionary<ShipmentStatus, ShipmentStatus[]> AllowedTransitions = new()
     {
@@ -209,6 +219,11 @@ public class ShipmentService(IShipmentRepository repository) : IShipmentService
         shipment.Status = newStatus;
         shipment.UpdatedAt = DateTime.UtcNow;
         await repository.SaveChangesAsync();
+
+        if (newStatus is ShipmentStatus.PickedUp or ShipmentStatus.OutForDelivery or ShipmentStatus.Delivered)
+        {
+            await SendShipmentStatusEmailAsync(shipment, newStatus);
+        }
 
         if (newStatus is ShipmentStatus.Booked or ShipmentStatus.PickedUp)
         {
@@ -419,6 +434,8 @@ public class ShipmentService(IShipmentRepository repository) : IShipmentService
 
         await repository.AddPickupAsync(pickup);
         await repository.SaveChangesAsync();
+
+        await SendPickupScheduledEmailAsync(shipment, pickup);
         return pickup;
     }
 
@@ -439,10 +456,15 @@ public class ShipmentService(IShipmentRepository repository) : IShipmentService
         var pickup = await repository.GetLatestPickupByShipmentAsync(shipmentId);
         if (pickup is null) return null;
 
+        var shipment = await repository.GetShipmentAsync(shipmentId);
+        if (shipment is null) return null;
+
         if (request.PickupDate.HasValue) pickup.PickupDate = request.PickupDate.Value;
         if (request.Notes is not null) pickup.Notes = request.Notes.Trim();
 
         await repository.SaveChangesAsync();
+
+        await SendPickupUpdatedEmailAsync(shipment, pickup);
         return pickup;
     }
 
@@ -525,6 +547,160 @@ public class ShipmentService(IShipmentRepository repository) : IShipmentService
             ps.Notes
         }).ToList()
     };
+
+    private async Task SendPickupScheduledEmailAsync(Shipment shipment, PickupSchedule pickup)
+    {
+        try
+        {
+            var recipientEmail = await GetCustomerEmailAsync(shipment.CustomerId);
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                logger.LogWarning("Pickup scheduled for shipment {ShipmentId} but customer email could not be resolved.", shipment.ShipmentId);
+                return;
+            }
+
+            var sent = await emailService.SendPickupScheduledEmailAsync(
+                recipientEmail,
+                shipment.TrackingNumber,
+                pickup.PickupDate,
+                pickup.Notes);
+
+            if (!sent)
+            {
+                logger.LogWarning("Pickup scheduled email could not be sent for shipment {ShipmentId} to {Email}.", shipment.ShipmentId, recipientEmail);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send pickup scheduled email for shipment {ShipmentId}.", shipment.ShipmentId);
+        }
+    }
+
+    private async Task SendPickupUpdatedEmailAsync(Shipment shipment, PickupSchedule pickup)
+    {
+        try
+        {
+            var recipientEmail = await GetCustomerEmailAsync(shipment.CustomerId);
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                logger.LogWarning("Pickup update email skipped for shipment {ShipmentId} because customer email could not be resolved.", shipment.ShipmentId);
+                return;
+            }
+
+            var sent = await emailService.SendPickupUpdatedEmailAsync(
+                recipientEmail,
+                shipment.TrackingNumber,
+                pickup.PickupDate,
+                pickup.Notes);
+
+            if (!sent)
+            {
+                logger.LogWarning("Pickup update email could not be sent for shipment {ShipmentId} to {Email}.", shipment.ShipmentId, recipientEmail);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send pickup update email for shipment {ShipmentId}.", shipment.ShipmentId);
+        }
+    }
+
+    private async Task SendShipmentStatusEmailAsync(Shipment shipment, ShipmentStatus status)
+    {
+        try
+        {
+            var recipientEmail = await GetCustomerEmailAsync(shipment.CustomerId);
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                logger.LogWarning("Status update email skipped for shipment {ShipmentId} because customer email could not be resolved.", shipment.ShipmentId);
+                return;
+            }
+
+            var message = status switch
+            {
+                ShipmentStatus.PickedUp => "Your package has been picked up by our logistics partner.",
+                ShipmentStatus.OutForDelivery => "Your package is out for delivery and will arrive soon.",
+                ShipmentStatus.Delivered => "Your package has been delivered successfully.",
+                _ => $"Your shipment status was updated to {status}."
+            };
+
+            var sent = await emailService.SendShipmentStatusEmailAsync(
+                recipientEmail,
+                shipment.TrackingNumber,
+                status.ToString(),
+                message);
+
+            if (!sent)
+            {
+                logger.LogWarning("Status update email could not be sent for shipment {ShipmentId} to {Email}. Status: {Status}", shipment.ShipmentId, recipientEmail, status);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send status update email for shipment {ShipmentId}. Status: {Status}", shipment.ShipmentId, status);
+        }
+    }
+
+    private async Task<string?> GetCustomerEmailAsync(Guid customerId)
+    {
+        const int maxAttempts = 3;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/users/{customerId}");
+                request.Version = HttpVersion.Version11;
+                request.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
+
+                using var response = await _identityClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.LogWarning(
+                        "Identity lookup failed for customer {CustomerId} with status code {StatusCode}. Attempt {Attempt}/{MaxAttempts}.",
+                        customerId,
+                        response.StatusCode,
+                        attempt,
+                        maxAttempts);
+
+                    if ((int)response.StatusCode >= 500 && attempt < maxAttempts)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
+                        continue;
+                    }
+
+                    return null;
+                }
+
+                var user = await response.Content.ReadFromJsonAsync<JsonElement>();
+                return user.TryGetProperty("email", out var email) ? email.GetString() :
+                       user.TryGetProperty("Email", out var emailUpper) ? emailUpper.GetString() : null;
+            }
+            catch (HttpRequestException ex) when (attempt < maxAttempts)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Transient identity lookup error for customer {CustomerId}. Attempt {Attempt}/{MaxAttempts}.",
+                    customerId,
+                    attempt,
+                    maxAttempts);
+                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
+            }
+            catch (TaskCanceledException ex) when (attempt < maxAttempts)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Identity lookup timeout for customer {CustomerId}. Attempt {Attempt}/{MaxAttempts}.",
+                    customerId,
+                    attempt,
+                    maxAttempts);
+                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt));
+            }
+        }
+
+        logger.LogWarning("Identity lookup exhausted retries for customer {CustomerId}.", customerId);
+        return null;
+    }
 
     private static bool CanAccessShipment(Shipment shipment, Guid requesterId, bool isAdmin)
     {

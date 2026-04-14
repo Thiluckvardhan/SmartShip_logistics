@@ -43,6 +43,60 @@ public class EmailService : IEmailService
         return await SendEmailAsync(recipientEmail, subject, body);
     }
 
+    public async Task<bool> SendPickupScheduledEmailAsync(string recipientEmail, string trackingNumber, DateTime pickupDate, string? notes = null)
+    {
+        var subject = "Pickup Scheduled for Your Shipment";
+        var formattedPickupDate = pickupDate.ToString("f");
+        var notesBlock = string.IsNullOrWhiteSpace(notes)
+            ? string.Empty
+            : $"<p><strong>Notes:</strong> {notes.Trim()}</p>";
+
+        var body = $@"
+                <h2>SmartShip Pickup Scheduled</h2>
+                <p>Your pickup has been scheduled successfully.</p>
+                <p><strong>Tracking Number:</strong> {trackingNumber}</p>
+                <p><strong>Pickup Date & Time:</strong> {formattedPickupDate}</p>
+                {notesBlock}
+                <p>You can track or manage your shipment anytime from your SmartShip account.</p>
+            ";
+
+        return await SendEmailAsync(recipientEmail, subject, body);
+    }
+
+    public async Task<bool> SendPickupUpdatedEmailAsync(string recipientEmail, string trackingNumber, DateTime pickupDate, string? notes = null)
+    {
+        var subject = "Pickup Updated for Your Shipment";
+        var formattedPickupDate = pickupDate.ToString("f");
+        var notesBlock = string.IsNullOrWhiteSpace(notes)
+            ? string.Empty
+            : $"<p><strong>Updated Notes:</strong> {notes.Trim()}</p>";
+
+        var body = $@"
+                <h2>SmartShip Pickup Updated</h2>
+                <p>Your pickup details have been updated.</p>
+                <p><strong>Tracking Number:</strong> {trackingNumber}</p>
+                <p><strong>Pickup Date & Time:</strong> {formattedPickupDate}</p>
+                {notesBlock}
+                <p>Please review your shipment details in your SmartShip account.</p>
+            ";
+
+        return await SendEmailAsync(recipientEmail, subject, body);
+    }
+
+    public async Task<bool> SendShipmentStatusEmailAsync(string recipientEmail, string trackingNumber, string status, string message)
+    {
+        var subject = $"Shipment Update: {status}";
+        var body = $@"
+                <h2>SmartShip Shipment Status Update</h2>
+                <p><strong>Tracking Number:</strong> {trackingNumber}</p>
+                <p><strong>Current Status:</strong> {status}</p>
+                <p>{message}</p>
+                <p>You can check live status in your SmartShip account.</p>
+            ";
+
+        return await SendEmailAsync(recipientEmail, subject, body);
+    }
+
     private async Task<bool> SendEmailAsync(string recipientEmail, string subject, string body)
     {
         try
@@ -55,7 +109,7 @@ public class EmailService : IEmailService
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_emailSettings.SenderEmail),
+                From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName),
                 Subject = subject,
                 Body = body,
                 IsBodyHtml = true
@@ -79,6 +133,7 @@ public class EmailSettings
 {
     public string SmtpHost { get; set; } = "smtp.gmail.com";
     public int Port { get; set; } = 587;
+    public string SenderName { get; set; } = "SmartShip Logistics";
     public string SenderEmail { get; set; } = string.Empty;
     public string SenderPassword { get; set; } = string.Empty;
     public bool EnableSsl { get; set; } = true;

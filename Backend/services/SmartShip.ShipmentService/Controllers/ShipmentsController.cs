@@ -22,10 +22,11 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
     [HttpGet("/api/shipments/{id:guid}")]
     public async Task<IActionResult> GetShipment(Guid id)
     {
+        var isAdmin = User.IsInRole("Admin");
         var userId = GetUserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        if (userId == Guid.Empty && !isAdmin) return Unauthorized();
 
-        var item = await shipmentService.GetShipmentAsync(id, userId, User.IsInRole("Admin"));
+        var item = await shipmentService.GetShipmentAsync(id, userId, isAdmin);
         return item is null ? NotFound() : Ok(item);
     }
 
@@ -40,10 +41,11 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
     [HttpGet("/api/shipments/track/{trackingNumber}")]
     public async Task<IActionResult> GetByTrackingNumber(string trackingNumber)
     {
+        var isAdmin = User.IsInRole("Admin");
         var userId = GetUserId();
-        if (userId == Guid.Empty) return Unauthorized();
+        if (userId == Guid.Empty && !isAdmin) return Unauthorized();
 
-        var item = await shipmentService.GetShipmentByTrackingNumberAsync(trackingNumber, userId, User.IsInRole("Admin"));
+        var item = await shipmentService.GetShipmentByTrackingNumberAsync(trackingNumber, userId, isAdmin);
         return item is null ? NotFound() : Ok(item);
     }
 

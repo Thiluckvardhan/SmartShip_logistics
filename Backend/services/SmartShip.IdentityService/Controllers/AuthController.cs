@@ -6,8 +6,27 @@ namespace SmartShip.IdentityService.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
+public class AuthController(IAuthService authService, IConfiguration configuration, ILogger<AuthController> logger) : ControllerBase
 {
+    [HttpGet("google-config")]
+    public IActionResult GetGoogleConfig()
+    {
+        var configuredClientIds = configuration
+            .GetSection("GoogleAuth:ClientIds")
+            .Get<string[]>()?
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? [];
+
+        var clientId = configuredClientIds.FirstOrDefault()
+            ?? (configuration["GoogleAuth:ClientId"] ?? string.Empty);
+
+        return Ok(new
+        {
+            clientId
+        });
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto request)
     {
@@ -25,18 +44,44 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
             var result = await authService.LoginAsync(request);
             if (result.Ok)
             {
-                logger.LogInformation("User {Email} logged in successfully. CorrelationId: {CorrelationId}", email, HttpContext.TraceIdentifier);
+                logger.LogInformation("Login challenge started for {Email}. CorrelationId: {CorrelationId}", email, HttpContext.TraceIdentifier);
                 return Ok(result.Data);
             }
 
             logger.LogWarning("Invalid login attempt for {Email}. CorrelationId: {CorrelationId}", email, HttpContext.TraceIdentifier);
-            return Unauthorized();
+            return Unauthorized(new { message = result.Message ?? "Invalid credentials." });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Login failed for {Email}. CorrelationId: {CorrelationId}", email, HttpContext.TraceIdentifier);
             throw;
         }
+    }
+
+    [HttpPost("verify-login-otp")]
+    public async Task<IActionResult> VerifyLoginOtp([FromBody] VerifyLoginOtpDto request)
+    {
+        var result = await authService.VerifyLoginOtpAsync(request);
+        return result.Ok
+            ? Ok(result.Data)
+            : Unauthorized(new { message = result.Message ?? "Invalid or expired OTP." });
+    }
+
+    [HttpPost("resend-login-otp")]
+    public async Task<IActionResult> ResendLoginOtp([FromBody] ResendLoginOtpDto request)
+    {
+        var result = await authService.ResendLoginOtpAsync(request);
+        if (result.Ok)
+        {
+            return Ok(result.Data);
+        }
+
+        if (result.Data is not null)
+        {
+            return StatusCode(429, result.Data);
+        }
+
+        return Unauthorized(new { message = result.Message ?? "Invalid or expired OTP challenge." });
     }
 
     [HttpPost("google")]

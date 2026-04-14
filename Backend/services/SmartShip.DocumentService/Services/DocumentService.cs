@@ -119,6 +119,20 @@ public class DocumentService(IDocumentRepository repository) : IDocumentService
         };
     }
 
+    public async Task<(byte[] Content, string ContentType, string FileName)?> DownloadDocumentAsync(Guid id, Guid requesterId, bool isAdmin)
+    {
+        var doc = await repository.GetDocumentAsync(id);
+        if (doc is null) return null;
+        if (!isAdmin && doc.CustomerId != requesterId) return null;
+        if (string.IsNullOrWhiteSpace(doc.FilePath) || !File.Exists(doc.FilePath)) return null;
+
+        var content = await File.ReadAllBytesAsync(doc.FilePath);
+        var contentType = string.IsNullOrWhiteSpace(doc.ContentType) ? "application/octet-stream" : doc.ContentType;
+        var fileName = string.IsNullOrWhiteSpace(doc.FileName) ? $"document-{doc.DocumentId}" : doc.FileName;
+
+        return (content, contentType, fileName);
+    }
+
     public async Task<object?> UpdateDocumentAsync(Guid id, Guid shipmentId, IFormFile? file, string contentRootPath, Guid requesterId, bool isAdmin)
     {
         var doc = await repository.GetDocumentAsync(id);

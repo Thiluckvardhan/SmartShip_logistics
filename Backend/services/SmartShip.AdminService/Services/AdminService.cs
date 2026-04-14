@@ -10,16 +10,27 @@ namespace SmartShip.AdminService.Services;
 public class AdminService(IAdminRepository repository, ILogger<AdminService> logger, IHttpClientFactory httpClientFactory, IServiceTokenGenerator serviceTokenGenerator) : IAdminService
 {
     private readonly HttpClient _shipmentClient = httpClientFactory.CreateClient("ShipmentService");
+    private readonly HttpClient _identityClient = httpClientFactory.CreateClient("IdentityService");
+    private static readonly HashSet<string> ExcludedShipmentStatuses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Delivered",
+        "Failed",
+        "Returned"
+    };
 
     // ── Dashboard & Statistics ──────────────────────────────
 
     public async Task<object> GetDashboardAsync()
     {
+        var totalShipmentsTask = GetTotalShipmentsAsync();
+        var totalUsersTask = GetTotalUsersAsync();
         var totalExceptions = await repository.GetExceptionCountAsync();
         var openExceptions = await repository.GetExceptionCountByStatusAsync("Open");
         var resolvedExceptions = await repository.GetExceptionCountByStatusAsync("Resolved");
         var activeHubs = await repository.GetHubCountAsync();
         var totalLocations = await repository.GetTotalLocationCountAsync();
+        var totalShipments = await totalShipmentsTask;
+        var totalUsers = await totalUsersTask;
 
         return new
         {
@@ -28,17 +39,23 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             ResolvedExceptions = resolvedExceptions,
             ActiveHubs = activeHubs,
             TotalLocations = totalLocations,
+            TotalShipments = totalShipments,
+            TotalUsers = totalUsers,
             GeneratedAt = DateTime.UtcNow
         };
     }
 
     public async Task<object> GetStatisticsAsync()
     {
+        var totalShipmentsTask = GetTotalShipmentsAsync();
+        var totalUsersTask = GetTotalUsersAsync();
         var totalHubs = await repository.GetTotalHubCountAsync();
         var activeHubs = await repository.GetHubCountAsync();
         var totalLocations = await repository.GetTotalLocationCountAsync();
         var totalExceptions = await repository.GetExceptionCountAsync();
         var openExceptions = await repository.GetExceptionCountByStatusAsync("Open");
+        var totalShipments = await totalShipmentsTask;
+        var totalUsers = await totalUsersTask;
 
         return new
         {
@@ -47,6 +64,8 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             TotalLocations = totalLocations,
             TotalExceptions = totalExceptions,
             OpenExceptions = openExceptions,
+            TotalShipments = totalShipments,
+            TotalUsers = totalUsers,
             GeneratedAt = DateTime.UtcNow
         };
     }
@@ -314,88 +333,6 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         };
     }
 
-    // ── Reports ─────────────────────────────────────────────
-
-    public async Task<object> GetReportsAsync()
-    {
-        var exceptions = await repository.GetAllExceptionsAsync();
-
-        var byType = exceptions.GroupBy(x => x.ExceptionType)
-            .Select(g => new { Type = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .ToList();
-
-        var byStatus = exceptions.GroupBy(x => x.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToList();
-
-        var recentExceptions = exceptions.Take(10).Select(x => new
-        {
-            x.ExceptionId,
-            x.ShipmentId,
-            x.ExceptionType,
-            x.Status,
-            x.CreatedAt,
-            x.ResolvedAt
-        }).ToList();
-
-        return new
-        {
-            ExceptionsByType = byType,
-            ExceptionsByStatus = byStatus,
-            RecentExceptions = recentExceptions,
-            GeneratedAt = DateTime.UtcNow
-        };
-    }
-
-    public Task<object> GetShipmentPerformanceReportAsync()
-    {
-        return Task.FromResult<object>(new
-        {
-            Report = "Shipment Performance",
-            Message = "Sourced from ShipmentService API.",
-            GeneratedAt = DateTime.UtcNow
-        });
-    }
-
-    public Task<object> GetDeliverySlaReportAsync()
-    {
-        return Task.FromResult<object>(new
-        {
-            Report = "Delivery SLA",
-            Message = "Aggregated from TrackingService and ShipmentService data.",
-            GeneratedAt = DateTime.UtcNow
-        });
-    }
-
-    public Task<object> GetRevenueReportAsync()
-    {
-        return Task.FromResult<object>(new
-        {
-            Report = "Revenue",
-            Message = "Sourced from ShipmentService API.",
-            GeneratedAt = DateTime.UtcNow
-        });
-    }
-
-    public async Task<object> GetHubPerformanceReportAsync()
-    {
-        var hubs = await repository.GetHubsAsync();
-
-        return new
-        {
-            Report = "Hub Performance",
-            Hubs = hubs.Select(h => new
-            {
-                h.HubId,
-                h.Name,
-                h.IsActive,
-                LocationCount = h.ServiceLocations.Count
-            }).ToList(),
-            GeneratedAt = DateTime.UtcNow
-        };
-    }
-
     // ── Helpers ─────────────────────────────────────────────
 
     private static object MapHub(Hub hub) => new
@@ -505,6 +442,53 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         return payload ?? [];
     }
 
+    private async Task<int> GetTotalShipmentsAsync()
+    {
+        var visibleShipments = await GetVisibleAdminShipmentsAsync();
+        return visibleShipments.Count;
+    }
+
+    private async Task<List<JsonElement>> GetVisibleAdminShipmentsAsync()
+    {
+        var allShipments = await GetAllShipmentsFromShipmentServiceAsync();
+        return allShipments.Where(IsShipmentVisibleForAdminSection).ToList();
+    }
+
+    private static bool IsShipmentVisibleForAdminSection(JsonElement shipment)
+    {
+        if (!TryGetShipmentStatus(shipment, out var status))
+        {
+            return true;
+        }
+
+        return !ExcludedShipmentStatuses.Contains(status);
+    }
+
+    private static bool TryGetShipmentStatus(JsonElement shipment, out string status)
+    {
+        if (shipment.TryGetProperty("status", out var statusElement) || shipment.TryGetProperty("Status", out statusElement))
+        {
+            status = statusElement.GetString() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(status);
+        }
+
+        status = string.Empty;
+        return false;
+    }
+
+    private async Task<int> GetTotalUsersAsync()
+    {
+        var response = await SendIdentityRequestAsync(HttpMethod.Get, "/api/users");
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("IdentityService users call failed with status code {StatusCode}", response.StatusCode);
+            return 0;
+        }
+
+        var users = await response.Content.ReadFromJsonAsync<List<JsonElement>>();
+        return users?.Count ?? 0;
+    }
+
     private async Task<HttpResponseMessage> SendShipmentRequestAsync(HttpMethod method, string path, object? body = null)
     {
         var request = new HttpRequestMessage(method, path);
@@ -516,5 +500,18 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         }
 
         return await _shipmentClient.SendAsync(request);
+    }
+
+    private async Task<HttpResponseMessage> SendIdentityRequestAsync(HttpMethod method, string path, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
+
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
+
+        return await _identityClient.SendAsync(request);
     }
 }

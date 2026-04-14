@@ -14,6 +14,7 @@ using SmartShip.IdentityService.Repositories;
 using SmartShip.IdentityService.Services;
 using Serilog;
 
+LoadDotEnvIntoEnvironment(Directory.GetCurrentDirectory());
 var builder = WebApplication.CreateBuilder(args);
 
 var solutionRoot = ResolveSolutionRoot(builder.Environment.ContentRootPath);
@@ -130,6 +131,7 @@ builder.Services.AddDbContext<IdentityDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
@@ -210,4 +212,57 @@ static string[] GetJwtAudiences(IConfiguration configuration)
     }
 
     return [configuration["Jwt:Audience"] ?? "SmartShipClients"];
+}
+
+static void LoadDotEnvIntoEnvironment(string startPath)
+{
+    var envFilePath = FindFileInParents(startPath, ".env");
+    if (envFilePath is null || !File.Exists(envFilePath))
+    {
+        return;
+    }
+
+    foreach (var rawLine in File.ReadLines(envFilePath))
+    {
+        var line = rawLine.Trim();
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+        {
+            continue;
+        }
+
+        var separator = line.IndexOf('=');
+        if (separator <= 0)
+        {
+            continue;
+        }
+
+        var key = line[..separator].Trim();
+        var value = line[(separator + 1)..].Trim().Trim('"');
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            continue;
+        }
+
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}
+
+static string? FindFileInParents(string startPath, string fileName)
+{
+    var current = new DirectoryInfo(startPath);
+    while (current is not null)
+    {
+        var candidate = Path.Combine(current.FullName, fileName);
+        if (File.Exists(candidate))
+        {
+            return candidate;
+        }
+
+        current = current.Parent;
+    }
+
+    return null;
 }
