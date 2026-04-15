@@ -118,7 +118,8 @@
   border-left: 2px solid #4F46E5;
 }
 
-.nav-icon { display: flex; align-items: center; flex-shrink: 0; width: 18px; }
+.nav-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 18px; }
+.nav-icon i { font-size: 0.95rem; line-height: 1; }
 
 /* Footer */
 .sidebar-footer {
