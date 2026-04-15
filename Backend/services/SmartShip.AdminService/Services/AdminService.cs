@@ -36,6 +36,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         {
             TotalExceptions = totalExceptions,
             OpenExceptions = openExceptions,
+            PendingExceptions = openExceptions,
             ResolvedExceptions = resolvedExceptions,
             ActiveHubs = activeHubs,
             TotalLocations = totalLocations,
@@ -64,6 +65,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             TotalLocations = totalLocations,
             TotalExceptions = totalExceptions,
             OpenExceptions = openExceptions,
+            PendingExceptions = openExceptions,
             TotalShipments = totalShipments,
             TotalUsers = totalUsers,
             GeneratedAt = DateTime.UtcNow
@@ -559,8 +561,36 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             return 0;
         }
 
-        var users = await response.Content.ReadFromJsonAsync<List<JsonElement>>();
-        return users?.Count ?? 0;
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>();
+        if (payload.ValueKind == JsonValueKind.Object)
+        {
+            if (payload.TryGetProperty("totalCount", out var totalCount) && totalCount.ValueKind == JsonValueKind.Number)
+            {
+                return totalCount.GetInt32();
+            }
+
+            if (payload.TryGetProperty("TotalCount", out totalCount) && totalCount.ValueKind == JsonValueKind.Number)
+            {
+                return totalCount.GetInt32();
+            }
+
+            if (payload.TryGetProperty("items", out var items) && items.ValueKind == JsonValueKind.Array)
+            {
+                return items.GetArrayLength();
+            }
+
+            if (payload.TryGetProperty("Items", out items) && items.ValueKind == JsonValueKind.Array)
+            {
+                return items.GetArrayLength();
+            }
+        }
+
+        if (payload.ValueKind == JsonValueKind.Array)
+        {
+            return payload.GetArrayLength();
+        }
+
+        return 0;
     }
 
     private async Task<HttpResponseMessage> SendShipmentRequestAsync(HttpMethod method, string path, object? body = null)

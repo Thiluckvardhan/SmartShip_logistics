@@ -14,7 +14,7 @@
 .ss-table tbody tr:hover { background: #FAFAFA; }
 
 .user-cell { display: flex; align-items: center; gap: 0.75rem; }
-.user-avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #4F46E5, #1E3A8A); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8125rem; font-weight: 700; flex-shrink: 0; }
+.user-avatar { width: 34px; height: 34px; background: linear-gradient(135deg, #4F46E5, #1E3A8A); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8125rem; font-weight: 700; flex-shrink: 0; }
 .user-name { font-weight: 500; color: #0F172A; }
 .muted { color: #64748B; font-size: 0.875rem; }
 
@@ -30,3 +30,34 @@
 .btn-delete:hover { background: #FEE2E2; }
 
 .empty-row { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem; color: #94A3B8; font-size: 0.9375rem; }
+
+.pagination {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	padding: 0.875rem 1.25rem;
+	border-top: 1px solid #F1F5F9;
+	background: #FAFBFF;
+}
+
+.page-info {
+	font-size: 0.8125rem;
+	color: #64748B;
+}
+
+.page-btn {
+	padding: 0.375rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid #D1D5DB;
+	background: #FFFFFF;
+	color: #1F2937;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.page-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}

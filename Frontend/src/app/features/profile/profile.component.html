@@ -29,8 +29,8 @@
             [class.is-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
           />
           <div class="error-message" *ngIf="form.get('name')?.touched && form.get('name')?.errors as errors">
-            <span *ngIf="errors['nameLength']">Name must be between 2 and 100 characters.</span>
-            <span *ngIf="errors['namePattern']">Name can only contain letters and spaces.</span>
+            <span *ngIf="errors['nameLength']">Name must be between 2 and 50 characters.</span>
+            <span *ngIf="errors['namePattern']">Name cannot contain numbers or special characters.</span>
           </div>
         </div>
 
@@ -40,13 +40,12 @@
             id="phone"
             type="tel"
             formControlName="phone"
-            placeholder="Your phone number"
+            placeholder="10-digit phone number"
             class="form-control"
             [class.is-invalid]="form.get('phone')?.invalid && form.get('phone')?.touched"
           />
           <div class="error-message" *ngIf="form.get('phone')?.touched && form.get('phone')?.errors as errors">
-            <span *ngIf="errors['phoneLength']">Phone number must be at most 20 characters.</span>
-            <span *ngIf="errors['phonePattern']">Invalid phone number format.</span>
+            <span *ngIf="errors['phoneExactDigits']">Phone number must be exactly 10 digits.</span>
           </div>
         </div>
 

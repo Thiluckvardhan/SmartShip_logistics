@@ -6,11 +6,11 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
  */
 export function nameValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const value: string = control.value;
+    const value: string = String(control.value ?? '').trim();
     if (!value) return null; // let Required handle empty
 
-    if (value.length > 50) {
-      return { nameLength: { max: 50, actual: value.length } };
+    if (value.length < 2 || value.length > 50) {
+      return { nameLength: { min: 2, max: 50, actual: value.length } };
     }
     if (!/^[A-Za-z\s]+$/.test(value)) {
       return { namePattern: true };
@@ -20,21 +20,16 @@ export function nameValidator(): ValidatorFn {
 }
 
 /**
- * Phone: valid phone format, max 20 chars
- * Matches: [Phone] attribute and StringLength(20)
- * Accepts digits, spaces, +, -, (, ) — standard phone characters
+ * Phone: exact 10 digits
+ * Used for all user-facing phone fields in frontend forms
  */
 export function phoneValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const value: string = control.value;
+    const value: string = String(control.value ?? '').trim();
     if (!value) return null; // phone is optional in most contexts
 
-    if (value.length > 20) {
-      return { phoneLength: { max: 20, actual: value.length } };
-    }
-    // Matches .NET [Phone] attribute: digits, spaces, +, -, (, ), ext
-    if (!/^[+\d][\d\s\-().]{0,19}$/.test(value)) {
-      return { phonePattern: true };
+    if (!/^\d{10}$/.test(value)) {
+      return { phoneExactDigits: true };
     }
     return null;
   };

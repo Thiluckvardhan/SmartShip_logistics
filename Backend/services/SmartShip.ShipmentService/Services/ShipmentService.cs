@@ -337,40 +337,26 @@ public class ShipmentService(
             return (false, "Damaged Product issues can be reported only after the shipment is delivered.", null);
         }
 
-        var adminClient = httpClientFactory.CreateClient("AdminService");
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/admin/exceptions");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
-        request.Content = JsonContent.Create(new
+        await QueueOutboxEventAsync(new ShipmentIssueReportedEvent
         {
-            shipmentId = id,
-            exceptionType = normalizedIssueType,
-            status = "Pending",
-            resolvedAt = (DateTime?)null,
-            description = description.Trim()
+            ShipmentId = shipment.ShipmentId,
+            TrackingNumber = shipment.TrackingNumber,
+            CustomerId = customerId,
+            IssueType = normalizedIssueType,
+            Description = description.Trim()
         });
 
-        try
-        {
-            using var response = await adminClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
-            {
-                var errBody = await response.Content.ReadAsStringAsync();
-                logger.LogWarning(
-                    "Admin exception record failed for shipment {ShipmentId}: {Status} {Body}",
-                    id,
-                    response.StatusCode,
-                    errBody);
-                return (false, "Unable to register your report. Please try again later.", null);
-            }
+        await repository.SaveChangesAsync();
 
-            var payload = await response.Content.ReadFromJsonAsync<object>();
-            return (true, null, payload);
-        }
-        catch (Exception ex)
+        return (true, null, new
         {
-            logger.LogError(ex, "Admin exception record request failed for shipment {ShipmentId}", id);
-            return (false, "Unable to register your report. Please try again later.", null);
-        }
+            ShipmentId = shipment.ShipmentId,
+            TrackingNumber = shipment.TrackingNumber,
+            ExceptionType = normalizedIssueType,
+            Status = "Pending",
+            Description = description.Trim(),
+            Message = "Issue submitted successfully and queued for admin review."
+        });
     }
 
     public async Task<(bool Ok, string? Message, object? Data)> GetShipmentIssuesAsync(Guid id, Guid requesterId, bool isAdmin)

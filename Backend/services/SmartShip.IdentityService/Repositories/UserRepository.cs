@@ -37,6 +37,16 @@ public class UserRepository(IdentityDbContext dbContext) : IUserRepository
         .ThenInclude(x => x.Role)
         .ToListAsync();
 
+    public Task<List<User>> GetUsersPagedAsync(int pageNumber, int pageSize) => dbContext.Users
+        .Include(x => x.UserRoles)
+        .ThenInclude(x => x.Role)
+        .OrderByDescending(x => x.CreatedAt)
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+    public Task<int> GetUserCountAsync() => dbContext.Users.CountAsync();
+
     public async Task AddUserAsync(User user) => await dbContext.Users.AddAsync(user);
 
     public Task DeleteUserAsync(User user)

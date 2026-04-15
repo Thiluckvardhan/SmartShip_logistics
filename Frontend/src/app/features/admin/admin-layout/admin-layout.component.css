@@ -240,22 +240,6 @@
   gap: 1rem;
 }
 
-.notif-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #F8FAFC;
-  border: 1px solid #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748B;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.notif-btn:hover { background: #F1F5F9; }
-
 .user-chip {
   display: flex;
   align-items: center;
@@ -268,15 +252,15 @@
 }
 
 .user-avatar {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   background: linear-gradient(135deg, #4F46E5, #1E3A8A);
-  border-radius: 7px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 

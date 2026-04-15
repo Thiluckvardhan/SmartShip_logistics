@@ -8,6 +8,8 @@ public interface IUserRepository
     Task<User?> GetUserByEmailAsync(string email, bool includeRole = false);
     Task<User?> GetUserByIdAsync(Guid userId, bool includeRoleAndUserRoles = false);
     Task<List<User>> GetUsersAsync();
+    Task<List<User>> GetUsersPagedAsync(int pageNumber, int pageSize);
+    Task<int> GetUserCountAsync();
     Task AddUserAsync(User user);
     Task DeleteUserAsync(User user);
 

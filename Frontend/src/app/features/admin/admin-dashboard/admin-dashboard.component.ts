@@ -23,9 +23,24 @@ export class AdminDashboardComponent implements OnInit {
       error: () => this.checkLoading()
     });
     this.adminService.getStatistics().subscribe({
-      next: (data) => { this.statistics = data; this.checkLoading(); },
+      next: (data) => { this.statistics = this.normalizeStatistics(data); this.checkLoading(); },
       error: () => this.checkLoading()
     });
+  }
+
+  private normalizeStatistics(data: any): any {
+    const openExceptions = data?.openExceptions ?? data?.OpenExceptions ?? 0;
+    const pendingExceptions = data?.pendingExceptions ?? data?.PendingExceptions ?? openExceptions;
+
+    return {
+      ...data,
+      totalShipments: data?.totalShipments ?? data?.TotalShipments ?? 0,
+      activeHubs: data?.activeHubs ?? data?.ActiveHubs ?? 0,
+      totalUsers: data?.totalUsers ?? data?.TotalUsers ?? 0,
+      totalExceptions: data?.totalExceptions ?? data?.TotalExceptions ?? 0,
+      openExceptions,
+      pendingExceptions
+    };
   }
 
   private checkLoading(): void {

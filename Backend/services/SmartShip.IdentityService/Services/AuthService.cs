@@ -504,10 +504,14 @@ public class AuthService(
         return (true, null);
     }
 
-    public async Task<object> GetAllUsersAsync()
+    public async Task<object> GetAllUsersAsync(int pageNumber, int pageSize)
     {
-        var users = await repository.GetUsersAsync();
-        return users.Select(x => new
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var totalCount = await repository.GetUserCountAsync();
+        var users = await repository.GetUsersPagedAsync(pageNumber, pageSize);
+        var items = users.Select(x => new
         {
             x.UserId,
             x.Name,
@@ -515,6 +519,15 @@ public class AuthService(
             x.CreatedAt,
             Role = x.UserRoles.Select(ur => ur.Role.RoleName).FirstOrDefault() ?? "Customer"
         }).ToList();
+
+        return new
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        };
     }
 
     public async Task<object?> GetUserByIdAsync(Guid userId)

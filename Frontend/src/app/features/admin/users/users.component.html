@@ -56,4 +56,10 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="pagination" *ngIf="users.length > 0">
+    <button class="page-btn" (click)="prevPage()" [disabled]="page === 1">Prev</button>
+    <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+    <button class="page-btn" (click)="nextPage()" [disabled]="page >= totalPages">Next</button>
+  </div>
 </div>

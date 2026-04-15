@@ -170,6 +170,11 @@
   margin-bottom: 0.5rem;
 }
 
+.required-mark {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .optional {
   font-weight: 400;
   color: var(--text-muted);

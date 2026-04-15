@@ -34,40 +34,43 @@
     </div>
     <div class="form-grid">
       <div class="field-group">
-        <label>Full Name *</label>
-        <input formControlName="name" class="field-input" placeholder="Sender's full name"/>
+        <label>Full Name <span class="required-mark">*</span></label>
+        <input formControlName="name" class="field-input" [class.invalid]="senderAddress.get('name')?.invalid && senderAddress.get('name')?.touched" placeholder="Sender's full name"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'name','required')">Name is required.</div>
-        <div class="field-error" *ngIf="hasError(senderAddress,'name','minlength')">Min 2 characters.</div>
+        <div class="field-error" *ngIf="hasError(senderAddress,'name','nameLength')">Name must be between 2 and 50 characters.</div>
+        <div class="field-error" *ngIf="hasError(senderAddress,'name','namePattern')">Name cannot contain numbers or special characters.</div>
       </div>
       <div class="field-group">
-        <label>Phone *</label>
-        <input formControlName="phone" class="field-input" placeholder="+91 98765 43210"/>
+        <label>Phone <span class="required-mark">*</span></label>
+        <input formControlName="phone" class="field-input" [class.invalid]="senderAddress.get('phone')?.invalid && senderAddress.get('phone')?.touched" placeholder="10-digit phone number"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'phone','required')">Phone is required.</div>
+        <div class="field-error" *ngIf="hasError(senderAddress,'phone','phoneExactDigits')">Phone number must be exactly 10 digits.</div>
       </div>
       <div class="field-group full">
-        <label>Street Address *</label>
-        <input formControlName="street" class="field-input" placeholder="Street, building, area"/>
+        <label>Street Address <span class="required-mark">*</span></label>
+        <input formControlName="street" class="field-input" [class.invalid]="senderAddress.get('street')?.invalid && senderAddress.get('street')?.touched" placeholder="Street, building, area"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'street','required')">Street is required.</div>
       </div>
       <div class="field-group">
-        <label>City *</label>
-        <input formControlName="city" class="field-input" placeholder="City"/>
+        <label>City <span class="required-mark">*</span></label>
+        <input formControlName="city" class="field-input" [class.invalid]="senderAddress.get('city')?.invalid && senderAddress.get('city')?.touched" placeholder="City"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'city','required')">City is required.</div>
       </div>
       <div class="field-group">
-        <label>State *</label>
-        <input formControlName="state" class="field-input" placeholder="State"/>
+        <label>State <span class="required-mark">*</span></label>
+        <input formControlName="state" class="field-input" [class.invalid]="senderAddress.get('state')?.invalid && senderAddress.get('state')?.touched" placeholder="State"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'state','required')">State is required.</div>
       </div>
       <div class="field-group">
-        <label>Country *</label>
-        <input formControlName="country" class="field-input" placeholder="Country"/>
+        <label>Country <span class="required-mark">*</span></label>
+        <input formControlName="country" class="field-input" [class.invalid]="senderAddress.get('country')?.invalid && senderAddress.get('country')?.touched" placeholder="Country"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'country','required')">Country is required.</div>
       </div>
       <div class="field-group">
-        <label>Pincode *</label>
-        <input formControlName="pincode" class="field-input" placeholder="Pincode / ZIP"/>
+        <label>Pincode <span class="required-mark">*</span></label>
+        <input formControlName="pincode" class="field-input" [class.invalid]="senderAddress.get('pincode')?.invalid && senderAddress.get('pincode')?.touched" placeholder="Pincode / ZIP"/>
         <div class="field-error" *ngIf="hasError(senderAddress,'pincode','required')">Pincode is required.</div>
+        <div class="field-error" *ngIf="hasError(senderAddress,'pincode','pattern')">Pincode must be exactly 6 digits (numbers only).</div>
       </div>
     </div>
     <div class="step-actions">
@@ -88,39 +91,43 @@
     </div>
     <div class="form-grid">
       <div class="field-group">
-        <label>Full Name *</label>
-        <input formControlName="name" class="field-input" placeholder="Receiver's full name"/>
+        <label>Full Name <span class="required-mark">*</span></label>
+        <input formControlName="name" class="field-input" [class.invalid]="receiverAddress.get('name')?.invalid && receiverAddress.get('name')?.touched" placeholder="Receiver's full name"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'name','required')">Name is required.</div>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'name','nameLength')">Name must be between 2 and 50 characters.</div>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'name','namePattern')">Name cannot contain numbers or special characters.</div>
       </div>
       <div class="field-group">
-        <label>Phone *</label>
-        <input formControlName="phone" class="field-input" placeholder="+91 98765 43210"/>
+        <label>Phone <span class="required-mark">*</span></label>
+        <input formControlName="phone" class="field-input" [class.invalid]="receiverAddress.get('phone')?.invalid && receiverAddress.get('phone')?.touched" placeholder="10-digit phone number"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'phone','required')">Phone is required.</div>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'phone','phoneExactDigits')">Phone number must be exactly 10 digits.</div>
       </div>
       <div class="field-group full">
-        <label>Street Address *</label>
-        <input formControlName="street" class="field-input" placeholder="Street, building, area"/>
+        <label>Street Address <span class="required-mark">*</span></label>
+        <input formControlName="street" class="field-input" [class.invalid]="receiverAddress.get('street')?.invalid && receiverAddress.get('street')?.touched" placeholder="Street, building, area"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'street','required')">Street is required.</div>
       </div>
       <div class="field-group">
-        <label>City *</label>
-        <input formControlName="city" class="field-input" placeholder="City"/>
+        <label>City <span class="required-mark">*</span></label>
+        <input formControlName="city" class="field-input" [class.invalid]="receiverAddress.get('city')?.invalid && receiverAddress.get('city')?.touched" placeholder="City"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'city','required')">City is required.</div>
       </div>
       <div class="field-group">
-        <label>State *</label>
-        <input formControlName="state" class="field-input" placeholder="State"/>
+        <label>State <span class="required-mark">*</span></label>
+        <input formControlName="state" class="field-input" [class.invalid]="receiverAddress.get('state')?.invalid && receiverAddress.get('state')?.touched" placeholder="State"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'state','required')">State is required.</div>
       </div>
       <div class="field-group">
-        <label>Country *</label>
-        <input formControlName="country" class="field-input" placeholder="Country"/>
+        <label>Country <span class="required-mark">*</span></label>
+        <input formControlName="country" class="field-input" [class.invalid]="receiverAddress.get('country')?.invalid && receiverAddress.get('country')?.touched" placeholder="Country"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'country','required')">Country is required.</div>
       </div>
       <div class="field-group">
-        <label>Pincode *</label>
-        <input formControlName="pincode" class="field-input" placeholder="Pincode / ZIP"/>
+        <label>Pincode <span class="required-mark">*</span></label>
+        <input formControlName="pincode" class="field-input" [class.invalid]="receiverAddress.get('pincode')?.invalid && receiverAddress.get('pincode')?.touched" placeholder="Pincode / ZIP"/>
         <div class="field-error" *ngIf="hasError(receiverAddress,'pincode','required')">Pincode is required.</div>
+        <div class="field-error" *ngIf="hasError(receiverAddress,'pincode','pattern')">Pincode must be exactly 6 digits (numbers only).</div>
       </div>
     </div>
     <div class="step-actions">
@@ -149,19 +156,26 @@
         </div>
         <div class="form-grid">
           <div class="field-group full">
-            <label>Item Name *</label>
-            <input formControlName="itemName" class="field-input" placeholder="e.g. Electronics, Clothing"/>
+            <label>Item Name <span class="required-mark">*</span></label>
+            <input formControlName="itemName" class="field-input" [class.invalid]="item.get('itemName')?.invalid && item.get('itemName')?.touched" placeholder="e.g. Electronics, Clothing"/>
             <div class="field-error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('required')">Item name is required.</div>
+            <div class="field-error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('nameLength')">Item name must be between 2 and 50 characters.</div>
+            <div class="field-error" *ngIf="item.get('itemName')?.touched && item.get('itemName')?.hasError('namePattern')">Item name cannot contain numbers or special characters.</div>
           </div>
           <div class="field-group">
-            <label>Quantity *</label>
-            <input type="number" formControlName="quantity" class="field-input" min="1"/>
+            <label>Quantity <span class="required-mark">*</span></label>
+            <input type="number" formControlName="quantity" class="field-input" [class.invalid]="item.get('quantity')?.invalid && item.get('quantity')?.touched" min="1"/>
+            <div class="field-error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('required')">Quantity is required.</div>
             <div class="field-error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('min')">Min 1.</div>
+            <div class="field-error" *ngIf="item.get('quantity')?.touched && item.get('quantity')?.hasError('max')">Max 10000.</div>
           </div>
           <div class="field-group">
-            <label>Weight (kg) *</label>
-            <input type="number" formControlName="weight" class="field-input" min="0.01" step="0.01"/>
+            <label>Weight (kg) <span class="required-mark">*</span></label>
+            <input type="number" formControlName="weight" class="field-input" [class.invalid]="item.get('weight')?.invalid && item.get('weight')?.touched" min="0.01" step="0.01"/>
+            <div class="field-error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('required')">Weight is required.</div>
             <div class="field-error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('min')">Min 0.01 kg.</div>
+            <div class="field-error" *ngIf="item.get('weight')?.touched && item.get('weight')?.hasError('max')">Max 50000 kg.</div>
+            <div class="field-error" *ngIf="isTotalWeightExceeded && i === items.length - 1">Total shipment weight cannot exceed {{ maxTotalWeight }} kg.</div>
           </div>
           <div class="field-group full">
             <label>Description <span class="optional">(optional)</span></label>
@@ -217,6 +231,9 @@
         <span>Total Weight</span>
         <strong>{{ totalWeight | number:'1.2-2' }} kg</strong>
       </div>
+      <div class="review-summary-row" *ngIf="isTotalWeightExceeded">
+        <span class="field-error">Maximum allowed total weight is {{ maxTotalWeight }} kg.</span>
+      </div>
       <div class="review-summary-row total">
         <span>Total Price</span>
         <strong>INR {{ totalPrice | number:'1.2-2' }}</strong>
@@ -225,7 +242,7 @@
 
     <div class="step-actions">
       <button type="button" class="btn-back" (click)="prevStep()">← Back</button>
-      <button type="submit" class="btn-submit" [disabled]="form.invalid || isSubmitting">
+      <button type="submit" class="btn-submit" [disabled]="form.invalid || isTotalWeightExceeded || isSubmitting">
         <span class="spinner" *ngIf="isSubmitting"></span>
         {{ isSubmitting ? 'Creating...' : 'Create Shipment' }}
       </button>

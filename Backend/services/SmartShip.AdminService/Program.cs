@@ -104,6 +104,7 @@ builder.Services.AddHttpClient("IdentityService", client =>
     var baseUrl = builder.Configuration["Services:IdentityServiceBaseUrl"] ?? "http://localhost:8001";
     client.BaseAddress = new Uri(baseUrl);
 });
+builder.Services.AddHostedService<AdminEventConsumer>();
 
 var app = builder.Build();
 

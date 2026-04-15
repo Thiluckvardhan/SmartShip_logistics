@@ -41,3 +41,12 @@ public class TrackingUpdatedEvent : IntegrationEvent
     public string Location { get; set; } = string.Empty;
     public string Remarks { get; set; } = string.Empty;
 }
+
+public class ShipmentIssueReportedEvent : IntegrationEvent
+{
+    public Guid ShipmentId { get; set; }
+    public string TrackingNumber { get; set; } = string.Empty;
+    public Guid CustomerId { get; set; }
+    public string IssueType { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}

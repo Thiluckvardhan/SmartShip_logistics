@@ -17,7 +17,7 @@ export class ShipmentListComponent implements OnInit {
 
   shipments: any[] = [];
   isLoading = true;
-  pageSize = 10;
+  pageSize = 5;
   currentPage = 1;
   searchQuery = '';
   statusFilter = '';

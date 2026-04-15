@@ -21,7 +21,7 @@ public interface IAuthService
     Task<bool> DeleteCurrentUserAsync(Guid userId);
 
     // Users - Admin Only
-    Task<object> GetAllUsersAsync();
+    Task<object> GetAllUsersAsync(int pageNumber, int pageSize);
     Task<object?> GetUserByIdAsync(Guid userId);
     Task<object?> GetUserByEmailAsync(string email);
     Task<(bool Ok, string? Message)> UpdateUserRoleAsync(Guid userId, string roleName);

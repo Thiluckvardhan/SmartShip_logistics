@@ -19,6 +19,9 @@ export class UsersComponent implements OnInit {
   readonly roleOptions = ['Admin', 'Customer'];
   isLoading = false;
   selectedRoles: { [userId: string]: string } = {};
+  page = 1;
+  pageSize = 5;
+  totalItems = 0;
 
   ngOnInit(): void {
     this.loadUsers();
@@ -26,9 +29,20 @@ export class UsersComponent implements OnInit {
 
   loadUsers(): void {
     this.isLoading = true;
-    this.userService.getAll().subscribe({
-      next: (data) => {
-        this.users = (data ?? []).map((user: any) => this.normalizeUser(user));
+    this.userService.getAll(this.page, this.pageSize).subscribe({
+      next: (res) => {
+        const items = res?.items ?? res?.Items ?? res ?? [];
+        this.users = (items ?? []).map((user: any) => this.normalizeUser(user));
+        this.totalItems = res?.totalCount ?? res?.TotalCount ?? this.users.length;
+
+        const totalPages = this.totalPages;
+        if (this.page > totalPages) {
+          this.page = totalPages;
+          this.isLoading = false;
+          this.loadUsers();
+          return;
+        }
+
         this.selectedRoles = {};
         this.users.forEach(u => {
           const role = (u.role ?? '').toString().toLowerCase();
@@ -38,6 +52,24 @@ export class UsersComponent implements OnInit {
       },
       error: () => { this.isLoading = false; }
     });
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.pageSize) || 1;
+  }
+
+  prevPage(): void {
+    if (this.page > 1) {
+      this.page--;
+      this.loadUsers();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page < this.totalPages) {
+      this.page++;
+      this.loadUsers();
+    }
   }
 
   updateRole(userId: string): void {

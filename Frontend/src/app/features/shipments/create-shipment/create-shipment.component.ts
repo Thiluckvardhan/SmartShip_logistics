@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } fr
 import { Router, RouterModule } from '@angular/router';
 import { ShipmentService } from '../services/shipment.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { nameValidator } from '../../../shared/validators/custom-validators';
+import { nameValidator, phoneValidator } from '../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-create-shipment',
@@ -19,6 +19,7 @@ export class CreateShipmentComponent {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private readonly ratePerKg = 10;
+  readonly maxTotalWeight = 300;
 
   isSubmitting = false;
   currentStep = 0; // 0=Sender, 1=Receiver, 2=Items, 3=Review
@@ -29,7 +30,7 @@ export class CreateShipmentComponent {
 
   get senderValid(): boolean { return this.senderAddress.valid; }
   get receiverValid(): boolean { return this.receiverAddress.valid; }
-  get itemsValid(): boolean { return this.items.valid; }
+  get itemsValid(): boolean { return this.items.valid && !this.isTotalWeightExceeded; }
 
   get totalWeight(): number {
     const items = (this.form.value.items ?? []) as Array<{ quantity?: number; weight?: number }>;
@@ -45,6 +46,10 @@ export class CreateShipmentComponent {
     return Number((this.totalWeight * this.ratePerKg).toFixed(2));
   }
 
+  get isTotalWeightExceeded(): boolean {
+    return this.totalWeight > this.maxTotalWeight;
+  }
+
   form: FormGroup = this.fb.group({
     senderAddress: this.buildAddressGroup(),
     receiverAddress: this.buildAddressGroup(),
@@ -54,12 +59,12 @@ export class CreateShipmentComponent {
   private buildAddressGroup(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required, nameValidator()]],
-      phone: ['', [Validators.required, Validators.maxLength(20)]],
+      phone: ['', [Validators.required, phoneValidator()]],
       street: ['', [Validators.required]],
       city: ['', [Validators.required]],
       state: ['', [Validators.required]],
       country: ['', [Validators.required]],
-      pincode: ['', [Validators.required]]
+      pincode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
     });
   }
 
@@ -95,7 +100,12 @@ export class CreateShipmentComponent {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.isTotalWeightExceeded) {
+      if (this.isTotalWeightExceeded) {
+        this.notificationService.error(`Total shipment weight cannot exceed ${this.maxTotalWeight} kg.`);
+      }
+      return;
+    }
     this.isSubmitting = true;
     this.shipmentService.create(this.form.value).subscribe({
       next: () => {
