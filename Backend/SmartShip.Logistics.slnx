@@ -14,4 +14,7 @@
     <Project Path="shared/SmartShip.Core/SmartShip.Core.csproj" />
   </Folder>
   <Folder Name="/logs/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartShip.Services.Tests/SmartShip.Services.Tests.csproj" />
+  </Folder>
 </Solution>
