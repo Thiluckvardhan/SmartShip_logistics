@@ -35,6 +35,12 @@
 .status-failed       { background: #FEE2E2; color: #B91C1C; }
 .status-returned     { background: #F3E8FF; color: #7E22CE; }
 
+.reach-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.reach-row { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.25rem 0; align-items: flex-start; }
+.reach-label { color: #64748B; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.reach-value { color: #0F172A; font-size: 0.9rem; font-weight: 600; text-align: right; }
+.reach-reason { color: #B45309; font-size: 0.88rem; text-align: right; max-width: 70%; }
+
 /* Journey */
 .journey-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
 .journey-title { font-size: 0.9375rem; font-weight: 600; color: #0F172A; margin-bottom: 1.5rem; }

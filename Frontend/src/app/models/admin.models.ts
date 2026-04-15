@@ -42,6 +42,10 @@ export interface ReturnShipmentDto {
   reason: string;
 }
 
+export interface ResolveExceptionDto {
+  description: string;
+}
+
 export interface CreateExceptionDto {
   shipmentId: string;
   exceptionType: string;

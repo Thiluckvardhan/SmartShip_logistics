@@ -113,6 +113,13 @@ builder.Services.AddHttpClient("IdentityService", client =>
     client.DefaultRequestVersion = HttpVersion.Version11;
     client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
 });
+builder.Services.AddHttpClient("AdminService", client =>
+{
+    var baseUrl = builder.Configuration["Services:AdminServiceBaseUrl"] ?? "http://localhost:8005";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestVersion = HttpVersion.Version11;
+    client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
+});
 builder.Services.AddSingleton<IEventBus, RabbitMQService>();
 builder.Services.AddHostedService<OutboxPublisherService>();
 

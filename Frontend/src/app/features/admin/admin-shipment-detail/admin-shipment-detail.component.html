@@ -81,6 +81,36 @@
     </div>
   </div>
 
+  <div class="travel-card">
+    <div class="travel-header">
+      <h2>Travel History</h2>
+      <span class="travel-sub">Route progression from one location to the next</span>
+    </div>
+
+    <table class="ss-table" *ngIf="travelHistory.length > 0; else noTravelHistory">
+      <thead>
+        <tr>
+          <th>Hub Movement</th>
+          <th>Service Location Movement</th>
+          <th>Status</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let hop of travelHistory">
+          <td>{{ hop.fromHub }} → {{ hop.toHub }}</td>
+          <td>{{ hop.fromServiceLocation }} → {{ hop.toServiceLocation }}</td>
+          <td>{{ hop.status || '—' }}</td>
+          <td class="muted">{{ hop.timestamp ? (hop.timestamp | date:'MMM d, y, h:mm a') : '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noTravelHistory>
+      <div class="empty-items">No location-to-location travel history is available yet.</div>
+    </ng-template>
+  </div>
+
   <div class="items-card">
     <div class="items-header">
       <h2>Items</h2>
@@ -110,12 +140,7 @@
   <div class="actions-section">
     <h2>Update Status</h2>
     <div class="action-buttons">
-      <button class="btn btn-secondary" (click)="action('pickup')">Picked Up</button>
-      <button class="btn btn-secondary" (click)="action('in-transit')">In Transit</button>
-      <button class="btn btn-secondary" (click)="action('out-for-delivery')">Out for Delivery</button>
-      <button class="btn btn-success" (click)="action('delivered')">Delivered</button>
-      <button class="btn btn-warning" (click)="action('delay')">Delay</button>
-      <button class="btn btn-danger" (click)="action('return')">Return</button>
+      <a class="btn btn-secondary" [routerLink]="['/admin/shipments', shipment.id, 'status-navigator']">Open Status Navigator</a>
     </div>
   </div>
 </div>

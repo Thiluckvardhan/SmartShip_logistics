@@ -54,6 +54,7 @@ services:
       Jwt__Issuer: ${JWT_ISSUER}
       Jwt__Audience: ${JWT_AUDIENCE}
       Services__IdentityServiceBaseUrl: http://identity-service:8080
+      Services__AdminServiceBaseUrl: http://admin-service:8080
       EmailSettings__SmtpHost: ${EMAIL_SMTP_HOST}
       EmailSettings__Port: 587
       EmailSettings__EnableSsl: "true"

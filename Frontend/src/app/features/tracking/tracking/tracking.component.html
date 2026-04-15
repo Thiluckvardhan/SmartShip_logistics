@@ -54,6 +54,17 @@
     </span>
   </div>
 
+  <div class="reach-card">
+    <div class="reach-row">
+      <span class="reach-label">Reached</span>
+      <span class="reach-value">{{ reachedLocationLabel }}</span>
+    </div>
+    <div class="reach-row" *ngIf="terminalReason">
+      <span class="reach-label">Reason</span>
+      <span class="reach-reason">{{ terminalReason }}</span>
+    </div>
+  </div>
+
   <!-- Journey Stepper -->
   <div class="journey-card">
     <h2 class="journey-title">Shipment Journey</h2>

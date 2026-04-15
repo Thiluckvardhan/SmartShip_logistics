@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { nameValidator } from '../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-locations',
@@ -26,7 +27,7 @@ export class LocationsComponent implements OnInit {
 
   form: FormGroup = this.fb.group({
     hubId: ['', Validators.required],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
+    name: ['', [Validators.required, nameValidator()]],
     zipCode: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
     isActive: [true]
   });

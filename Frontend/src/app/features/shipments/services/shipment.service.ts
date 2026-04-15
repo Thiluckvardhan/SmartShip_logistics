@@ -6,7 +6,8 @@ import {
   CreateShipmentDto,
   UpdateShipmentDto,
   UpdateShipmentStatusDto,
-  CalculateRateDto
+  CalculateRateDto,
+  AdminUpdateShipmentJourneyDto
 } from '../../../models/shipment.models';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +39,14 @@ export class ShipmentService {
     return this.http.post(`${this.apiUrl}/api/shipments/${id}/book`, {});
   }
 
+  reportIssue(id: string, body: { issueType: string; description: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/api/shipments/${id}/report-issue`, body);
+  }
+
+  getIssues(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/shipments/${id}/issues`);
+  }
+
   delete(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/api/shipments/${id}`);
   }
@@ -56,6 +65,10 @@ export class ShipmentService {
 
   updateStatus(id: string, dto: UpdateShipmentStatusDto): Observable<any> {
     return this.http.put(`${this.apiUrl}/api/shipments/${id}/status`, dto);
+  }
+
+  adminUpdateStatusJourney(id: string, dto: AdminUpdateShipmentJourneyDto): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/shipments/${id}/admin-update-status`, dto);
   }
 
   markPickedUp(id: string): Observable<any> {

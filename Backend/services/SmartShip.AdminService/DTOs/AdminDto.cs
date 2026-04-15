@@ -108,6 +108,11 @@ public record UpdateExceptionDto(
 
     DateTime? ResolvedAt);
 
+public record ResolveExceptionDto(
+    [Required(ErrorMessage = "Resolution description is required.")]
+    [StringLength(1000, MinimumLength = 5, ErrorMessage = "Resolution description must be between 5 and 1000 characters.")]
+    string Description);
+
 // ── Shipment Action DTOs ────────────────────────────────────
 public record ResolveShipmentDto(
     [Required(ErrorMessage = "Resolution notes are required.")]

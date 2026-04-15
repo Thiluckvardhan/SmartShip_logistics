@@ -146,3 +146,26 @@ public record UpdatePickupDto(
 
     [StringLength(500, ErrorMessage = "Notes must not exceed 500 characters.")]
     string? Notes);
+
+public record ReportShipmentIssueDto(
+    [Required(ErrorMessage = "Issue type is required.")]
+    [StringLength(50, MinimumLength = 2, ErrorMessage = "Issue type must be between 2 and 50 characters.")]
+    string IssueType,
+
+    [Required(ErrorMessage = "Description is required.")]
+    [StringLength(1000, MinimumLength = 5, ErrorMessage = "Description must be between 5 and 1000 characters.")]
+    string Description);
+
+public record AdminUpdateShipmentJourneyDto(
+    [Required(ErrorMessage = "Status is required.")]
+    [StringLength(50, MinimumLength = 2, ErrorMessage = "Status must be between 2 and 50 characters.")]
+    string Status,
+
+    [StringLength(200, ErrorMessage = "Hub name must not exceed 200 characters.")]
+    string? HubName,
+
+    [StringLength(200, ErrorMessage = "Service location name must not exceed 200 characters.")]
+    string? ServiceLocationName,
+
+    [StringLength(1000, ErrorMessage = "Reason must not exceed 1000 characters.")]
+    string? Reason);

@@ -90,6 +90,21 @@ public class AdminController(IAdminService adminService) : ControllerBase
     public async Task<IActionResult> GetExceptions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 5)
         => Ok(await adminService.GetExceptionsPagedAsync(pageNumber, pageSize));
 
+    [HttpGet("exceptions/shipment/{shipmentId:guid}")]
+    public async Task<IActionResult> GetExceptionsByShipment(Guid shipmentId)
+        => Ok(await adminService.GetExceptionsByShipmentAsync(shipmentId));
+
+    [HttpPost("exceptions")]
+    public async Task<IActionResult> CreateException([FromBody] CreateExceptionDto request)
+        => Ok(await adminService.CreateExceptionRecordAsync(request));
+
+    [HttpPut("exceptions/{id:guid}/resolve")]
+    public async Task<IActionResult> ResolveException(Guid id, [FromBody] ResolveExceptionDto request)
+    {
+        var result = await adminService.ResolveExceptionRecordAsync(id, request);
+        return result is null ? NotFound() : Ok(result);
+    }
+
     // ── Shipments ───────────────────────────────────────────
 
     [HttpPut("shipments/{id:guid}/resolve")]

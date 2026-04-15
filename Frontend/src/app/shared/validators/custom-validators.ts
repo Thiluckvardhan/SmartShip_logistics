@@ -1,16 +1,16 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 /**
- * Name: letters and spaces only, 2–100 chars
- * Matches: ^[A-Za-z\s]+$ and StringLength(100, MinimumLength = 2)
+ * Name: letters and spaces only, up to 50 chars
+ * Matches: ^[A-Za-z\s]+$ and StringLength(50)
  */
 export function nameValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const value: string = control.value;
     if (!value) return null; // let Required handle empty
 
-    if (value.length < 2 || value.length > 100) {
-      return { nameLength: { min: 2, max: 100, actual: value.length } };
+    if (value.length > 50) {
+      return { nameLength: { max: 50, actual: value.length } };
     }
     if (!/^[A-Za-z\s]+$/.test(value)) {
       return { namePattern: true };

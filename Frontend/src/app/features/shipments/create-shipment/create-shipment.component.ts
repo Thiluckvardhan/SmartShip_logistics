@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } fr
 import { Router, RouterModule } from '@angular/router';
 import { ShipmentService } from '../services/shipment.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { nameValidator } from '../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-create-shipment',
@@ -52,7 +53,7 @@ export class CreateShipmentComponent {
 
   private buildAddressGroup(): FormGroup {
     return this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      name: ['', [Validators.required, nameValidator()]],
       phone: ['', [Validators.required, Validators.maxLength(20)]],
       street: ['', [Validators.required]],
       city: ['', [Validators.required]],
@@ -64,7 +65,7 @@ export class CreateShipmentComponent {
 
   private buildItemGroup(): FormGroup {
     return this.fb.group({
-      itemName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(200)]],
+      itemName: ['', [Validators.required, nameValidator()]],
       quantity: [1, [Validators.required, Validators.min(1), Validators.max(10000)]],
       weight: [0.1, [Validators.required, Validators.min(0.01), Validators.max(50000)]],
       description: ['']

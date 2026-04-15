@@ -9,7 +9,8 @@ import {
   UpdateServiceLocationDto,
   ResolveShipmentDto,
   DelayShipmentDto,
-  ReturnShipmentDto
+  ReturnShipmentDto,
+  ResolveExceptionDto
 } from '../../../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +67,14 @@ export class AdminService {
   getExceptions(page = 1, size = 5): Observable<any> {
     const params = new HttpParams().set('pageNumber', page).set('pageSize', size);
     return this.http.get(`${this.apiUrl}/api/admin/exceptions`, { params });
+  }
+
+  getExceptionsByShipment(shipmentId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/api/admin/exceptions/shipment/${shipmentId}`);
+  }
+
+  resolveException(id: string, dto: ResolveExceptionDto): Observable<any> {
+    return this.http.put(`${this.apiUrl}/api/admin/exceptions/${id}/resolve`, dto);
   }
 
   resolveShipment(id: string, dto: ResolveShipmentDto): Observable<any> {

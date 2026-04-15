@@ -24,6 +24,9 @@ public interface IAdminService
 
     // Exceptions
     Task<object> GetExceptionsPagedAsync(int pageNumber, int pageSize);
+    Task<object> GetExceptionsByShipmentAsync(Guid shipmentId);
+    Task<object> CreateExceptionRecordAsync(CreateExceptionDto request);
+    Task<object?> ResolveExceptionRecordAsync(Guid id, ResolveExceptionDto request);
 
     // Shipments
     Task<object?> ResolveShipmentAsync(Guid id, ResolveShipmentDto request);

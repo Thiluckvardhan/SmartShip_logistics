@@ -60,80 +60,88 @@ public class TrackingEventConsumer : BackgroundService
 
         consumer.Received += async (_, ea) =>
         {
-            var message = Encoding.UTF8.GetString(ea.Body.ToArray());
-            var routingKey = ea.RoutingKey;
+            try
+            {
+                var message = Encoding.UTF8.GetString(ea.Body.ToArray());
+                var routingKey = ea.RoutingKey;
 
-            using var scope = _serviceProvider.CreateScope();
-            var repo = scope.ServiceProvider.GetRequiredService<ITrackingRepository>();
+                using var scope = _serviceProvider.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<ITrackingRepository>();
 
-            if (routingKey == nameof(ShipmentCreatedEvent))
-            {
-                var evt = JsonSerializer.Deserialize<ShipmentCreatedEvent>(message);
-                if (evt != null)
+                if (routingKey == nameof(ShipmentCreatedEvent))
                 {
-                    await repo.AddEventAsync(new TrackingEvent
+                    var evt = JsonSerializer.Deserialize<ShipmentCreatedEvent>(message);
+                    if (evt != null)
                     {
-                        EventId = Guid.NewGuid(),
-                        TrackingNumber = evt.TrackingNumber,
-                        Status = "CREATED",
-                        Location = "System",
-                        Description = "Shipment Created",
-                        Timestamp = DateTime.UtcNow
-                    });
+                        await repo.AddEventAsync(new TrackingEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            TrackingNumber = evt.TrackingNumber,
+                            Status = "CREATED",
+                            Location = "System",
+                            Description = "Shipment Created",
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
                 }
-            }
-            else if (routingKey == nameof(TrackingUpdatedEvent))
-            {
-                var evt = JsonSerializer.Deserialize<TrackingUpdatedEvent>(message);
-                if (evt != null)
+                else if (routingKey == nameof(TrackingUpdatedEvent))
                 {
-                    await repo.AddEventAsync(new TrackingEvent
+                    var evt = JsonSerializer.Deserialize<TrackingUpdatedEvent>(message);
+                    if (evt != null)
                     {
-                        EventId = Guid.NewGuid(),
-                        TrackingNumber = evt.TrackingNumber,
-                        Status = evt.Status,
-                        Location = evt.Location,
-                        Description = evt.Remarks,
-                        Timestamp = DateTime.UtcNow
-                    });
+                        await repo.AddEventAsync(new TrackingEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            TrackingNumber = evt.TrackingNumber,
+                            Status = evt.Status,
+                            Location = evt.Location,
+                            Description = evt.Remarks,
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
                 }
-            }
-            else if (routingKey == nameof(ShipmentBookedEvent))
-            {
-                var evt = JsonSerializer.Deserialize<ShipmentBookedEvent>(message);
-                if (evt != null)
+                else if (routingKey == nameof(ShipmentBookedEvent))
                 {
-                    var status = string.IsNullOrWhiteSpace(evt.HubId) ? "PICKED_UP" : evt.HubId.Trim();
-                    await repo.AddEventAsync(new TrackingEvent
+                    var evt = JsonSerializer.Deserialize<ShipmentBookedEvent>(message);
+                    if (evt != null)
                     {
-                        EventId = Guid.NewGuid(),
-                        TrackingNumber = evt.TrackingNumber,
-                        Status = status,
-                        Location = "Hub",
-                        Description = $"Shipment moved to {status}",
-                        Timestamp = DateTime.UtcNow
-                    });
+                        var status = string.IsNullOrWhiteSpace(evt.HubId) ? "PICKED_UP" : evt.HubId.Trim();
+                        await repo.AddEventAsync(new TrackingEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            TrackingNumber = evt.TrackingNumber,
+                            Status = status,
+                            Location = "Hub",
+                            Description = $"Shipment moved to {status}",
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
                 }
-            }
-            else if (routingKey == nameof(ShipmentDeliveredEvent))
-            {
-                var evt = JsonSerializer.Deserialize<ShipmentDeliveredEvent>(message);
-                if (evt != null)
+                else if (routingKey == nameof(ShipmentDeliveredEvent))
                 {
-                    await repo.AddEventAsync(new TrackingEvent
+                    var evt = JsonSerializer.Deserialize<ShipmentDeliveredEvent>(message);
+                    if (evt != null)
                     {
-                        EventId = Guid.NewGuid(),
-                        TrackingNumber = evt.TrackingNumber,
-                        Status = "DELIVERED",
-                        Location = "Destination",
-                        Description = "Shipment Delivered",
-                        Timestamp = DateTime.UtcNow
-                    });
+                        await repo.AddEventAsync(new TrackingEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            TrackingNumber = evt.TrackingNumber,
+                            Status = "DELIVERED",
+                            Location = "Destination",
+                            Description = "Shipment Delivered",
+                            Timestamp = DateTime.UtcNow
+                        });
+                    }
                 }
-            }
 
-            await repo.SaveChangesAsync();
-            _channel.BasicAck(ea.DeliveryTag, false);
+                await repo.SaveChangesAsync();
+                _channel.BasicAck(ea.DeliveryTag, false);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Tracking consumer failed: {ex.Message}");
+                _channel.BasicNack(ea.DeliveryTag, false, requeue: false);
+            }
         };
 
         foreach (var queue in _queues.Distinct(StringComparer.OrdinalIgnoreCase))

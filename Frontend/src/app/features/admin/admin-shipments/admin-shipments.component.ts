@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
-import { ShipmentService } from '../../shipments/services/shipment.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
@@ -15,13 +14,12 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class AdminShipmentsComponent implements OnInit {
   private adminService = inject(AdminService);
-  private shipmentService = inject(ShipmentService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
 
   shipments: any[] = [];
   page = 1;
-  pageSize = 10;
+  pageSize = 5;
   totalItems = 0;
   statusFilter = '';
   isLoading = false;
@@ -41,7 +39,9 @@ export class AdminShipmentsComponent implements OnInit {
         this.totalItems = res.totalCount ?? this.shipments.length;
         this.isLoading = false;
       },
-      error: () => { this.isLoading = false; }
+      error: () => {
+        this.isLoading = false;
+      }
     });
   }
 
@@ -71,27 +71,12 @@ export class AdminShipmentsComponent implements OnInit {
     this.router.navigate(['/admin/shipments', id]);
   }
 
-  updateStatus(id: string, action: string): void {
+  openStatusNavigator(id: string): void {
     if (!id) {
-      this.notificationService.error('Unable to update status: missing shipment id');
+      this.notificationService.error('Unable to open status navigator: missing shipment id');
       return;
     }
-
-    let call$;
-    switch (action) {
-      case 'pickup': call$ = this.shipmentService.markPickedUp(id); break;
-      case 'in-transit': call$ = this.shipmentService.markInTransit(id); break;
-      case 'out-for-delivery': call$ = this.shipmentService.markOutForDelivery(id); break;
-      case 'delivered': call$ = this.shipmentService.markDelivered(id); break;
-      case 'failed': call$ = this.shipmentService.markFailed(id); break;
-      case 'delay': call$ = this.shipmentService.markDelayed(id); break;
-      case 'return': call$ = this.shipmentService.markReturned(id); break;
-      default: return;
-    }
-    call$.subscribe({
-      next: () => { this.notificationService.success('Status updated'); this.load(); },
-      error: () => this.notificationService.error('Failed to update status')
-    });
+    this.router.navigate(['/admin/shipments', id, 'status-navigator']);
   }
 
   private normalizeShipment(shipment: any): any {

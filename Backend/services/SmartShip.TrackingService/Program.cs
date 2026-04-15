@@ -95,6 +95,8 @@ builder.Services.AddScoped<ITrackingRepository, TrackingRepository>();
 builder.Services.AddScoped<ITrackingService, TrackingService>();
 builder.Services.AddHostedService<TrackingEventConsumer>();
 
+await EnsureTrackingSchemaAsync(builder.Services);
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -131,6 +133,39 @@ app.MapControllers();
 app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 
 app.Run();
+
+static async Task EnsureTrackingSchemaAsync(IServiceCollection services)
+{
+    using var provider = services.BuildServiceProvider();
+    using var scope = provider.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<TrackingDbContext>();
+
+    await dbContext.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'dbo.TrackingLogs', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TrackingLogs (
+        TrackingLogId uniqueidentifier NOT NULL PRIMARY KEY,
+        ShipmentId uniqueidentifier NOT NULL,
+        TrackingNumber nvarchar(100) NOT NULL,
+        Status nvarchar(50) NOT NULL,
+        Location nvarchar(200) NOT NULL,
+        Description nvarchar(1000) NOT NULL,
+        Timestamp datetime2 NOT NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.TrackingLocations', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TrackingLocations (
+        LocationId uniqueidentifier NOT NULL PRIMARY KEY,
+        TrackingNumber nvarchar(100) NOT NULL,
+        Latitude float NOT NULL,
+        Longitude float NOT NULL,
+        Timestamp datetime2 NOT NULL
+    );
+END;
+");
+}
 
 static string ResolveSolutionRoot(string contentRoot)
 {

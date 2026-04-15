@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AdminService } from '../services/admin.service';
-import { ShipmentService } from '../../shipments/services/shipment.service';
+import { TrackingService } from '../../tracking/services/tracking.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
@@ -15,12 +15,21 @@ import { NotificationService } from '../../../core/services/notification.service
 export class AdminShipmentDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private adminService = inject(AdminService);
-  private shipmentService = inject(ShipmentService);
+  private trackingService = inject(TrackingService);
   private notificationService = inject(NotificationService);
 
   shipment: any = null;
   creator: { name: string; email: string } | null = null;
+  travelHistory: Array<{
+    fromHub: string;
+    toHub: string;
+    fromServiceLocation: string;
+    toServiceLocation: string;
+    status: string;
+    timestamp: string | null;
+  }> = [];
   isLoading = true;
+  private travelHistoryTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -29,35 +38,130 @@ export class AdminShipmentDetailComponent implements OnInit {
         this.shipment = this.normalizeShipment(data);
         this.isLoading = false;
         this.loadCreatorInfo();
+        this.startTravelHistoryAutoRefresh();
       },
       error: () => { this.isLoading = false; }
     });
   }
 
-  action(type: string): void {
-    const id = this.shipment?.id;
-    if (!id) {
-      this.notificationService.error('Unable to update status: missing shipment id');
+  ngOnDestroy(): void {
+    this.stopTravelHistoryAutoRefresh();
+  }
+
+  private loadTravelHistory(): void {
+    const trackingNumber = String(this.shipment?.trackingNumber ?? '').trim();
+    if (!trackingNumber) {
+      this.travelHistory = [];
       return;
     }
 
-    let call$;
-    switch (type) {
-      case 'pickup': call$ = this.shipmentService.markPickedUp(id); break;
-      case 'in-transit': call$ = this.shipmentService.markInTransit(id); break;
-      case 'out-for-delivery': call$ = this.shipmentService.markOutForDelivery(id); break;
-      case 'delivered': call$ = this.shipmentService.markDelivered(id); break;
-      case 'delay': call$ = this.shipmentService.markDelayed(id); break;
-      case 'return': call$ = this.shipmentService.markReturned(id); break;
-      default: return;
-    }
-    call$.subscribe({
-      next: (updated) => {
-        this.shipment = { ...this.shipment, ...updated };
-        this.notificationService.success('Status updated successfully');
+    this.trackingService.getTimeline(trackingNumber, true).subscribe({
+      next: (events) => {
+        this.travelHistory = this.mapTravelHistory(events ?? []);
       },
-      error: () => this.notificationService.error('Failed to update status')
+      error: () => {
+        this.travelHistory = [];
+      }
     });
+  }
+
+  private startTravelHistoryAutoRefresh(): void {
+    this.stopTravelHistoryAutoRefresh();
+    this.loadTravelHistory();
+
+    this.travelHistoryTimer = setInterval(() => {
+      this.loadTravelHistory();
+    }, 4000);
+  }
+
+  private stopTravelHistoryAutoRefresh(): void {
+    if (this.travelHistoryTimer) {
+      clearInterval(this.travelHistoryTimer);
+      this.travelHistoryTimer = null;
+    }
+  }
+
+  private mapTravelHistory(events: any[]): Array<{
+    fromHub: string;
+    toHub: string;
+    fromServiceLocation: string;
+    toServiceLocation: string;
+    status: string;
+    timestamp: string | null;
+  }> {
+    const sorted = [...events].sort((a, b) => {
+      const first = new Date(a?.timestamp ?? a?.Timestamp ?? 0).getTime();
+      const second = new Date(b?.timestamp ?? b?.Timestamp ?? 0).getTime();
+      return Number.isNaN(first) || Number.isNaN(second) ? 0 : first - second;
+    });
+
+    const cleaned = sorted
+      .map((event) => ({
+        location: this.parseTimelineLocation(event?.location ?? event?.Location ?? ''),
+        status: String(event?.status ?? event?.Status ?? '').trim(),
+        timestamp: event?.timestamp ?? event?.Timestamp ?? null
+      }))
+      .filter((event) => !!event.location.hub || !!event.location.serviceLocation);
+
+    const transitions: Array<{
+      fromHub: string;
+      toHub: string;
+      fromServiceLocation: string;
+      toServiceLocation: string;
+      status: string;
+      timestamp: string | null;
+    }> = [];
+
+    for (let i = 1; i < cleaned.length; i++) {
+      const from = cleaned[i - 1];
+      const to = cleaned[i];
+
+      const sameHub = from.location.hub === to.location.hub;
+      const sameServiceLocation = from.location.serviceLocation === to.location.serviceLocation;
+      if (sameHub && sameServiceLocation) {
+        continue;
+      }
+
+      transitions.push({
+        fromHub: from.location.hub || '—',
+        toHub: to.location.hub || '—',
+        fromServiceLocation: from.location.serviceLocation || '—',
+        toServiceLocation: to.location.serviceLocation || '—',
+        status: to.status,
+        timestamp: to.timestamp
+      });
+    }
+
+    return transitions;
+  }
+
+  private parseTimelineLocation(raw: string): { hub: string; serviceLocation: string } {
+    const location = String(raw ?? '').trim();
+    if (!location) {
+      return { hub: '', serviceLocation: '' };
+    }
+
+    const ignored = ['system', 'hub', 'destination', ''];
+    const parts = location
+      .split(/[·•|]/)
+      .map((part) => part.trim())
+      .filter((part) => !ignored.includes(part.toLowerCase()));
+
+    if (parts.length >= 2) {
+      return {
+        serviceLocation: parts[0],
+        hub: parts[parts.length - 1]
+      };
+    }
+
+    if (parts.length === 1) {
+      return {
+        serviceLocation: parts[0],
+        hub: parts[0]
+      };
+    }
+
+    return { hub: '', serviceLocation: '' };
   }
 
   private normalizeShipment(shipment: any): any {

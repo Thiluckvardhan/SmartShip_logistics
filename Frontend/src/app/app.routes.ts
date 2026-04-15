@@ -106,6 +106,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/admin-shipment-detail/admin-shipment-detail.component').then(m => m.AdminShipmentDetailComponent)
       },
       {
+        path: 'shipments/:id/status-navigator',
+        loadComponent: () => import('./features/admin/admin-shipment-status-navigator/admin-shipment-status-navigator.component').then(m => m.AdminShipmentStatusNavigatorComponent)
+      },
+      {
         path: 'hubs',
         loadComponent: () => import('./features/admin/hubs/hubs.component').then(m => m.HubsComponent)
       },

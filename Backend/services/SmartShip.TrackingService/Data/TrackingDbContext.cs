@@ -12,7 +12,11 @@ public class TrackingDbContext(DbContextOptions<TrackingDbContext> options) : Db
     {
         modelBuilder.Entity<TrackingEvent>(entity =>
         {
+            entity.ToTable("TrackingLogs");
             entity.HasKey(x => x.EventId);
+            entity.Property(x => x.EventId)
+                .HasColumnName("TrackingLogId")
+                .ValueGeneratedOnAdd();
 
             entity.Property(x => x.TrackingNumber)
                 .IsRequired()
@@ -35,7 +39,11 @@ public class TrackingDbContext(DbContextOptions<TrackingDbContext> options) : Db
 
         modelBuilder.Entity<TrackingLocation>(entity =>
         {
+            entity.ToTable("TrackingLocations");
             entity.HasKey(x => x.LocationId);
+            entity.Property(x => x.LocationId)
+                .HasColumnName("LocationId")
+                .ValueGeneratedOnAdd();
 
             entity.Property(x => x.TrackingNumber)
                 .IsRequired()

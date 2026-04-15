@@ -25,7 +25,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         var totalShipmentsTask = GetTotalShipmentsAsync();
         var totalUsersTask = GetTotalUsersAsync();
         var totalExceptions = await repository.GetExceptionCountAsync();
-        var openExceptions = await repository.GetExceptionCountByStatusAsync("Open");
+        var openExceptions = await repository.GetExceptionCountByStatusAsync("Open") + await repository.GetExceptionCountByStatusAsync("Pending");
         var resolvedExceptions = await repository.GetExceptionCountByStatusAsync("Resolved");
         var activeHubs = await repository.GetHubCountAsync();
         var totalLocations = await repository.GetTotalLocationCountAsync();
@@ -53,7 +53,7 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
         var activeHubs = await repository.GetHubCountAsync();
         var totalLocations = await repository.GetTotalLocationCountAsync();
         var totalExceptions = await repository.GetExceptionCountAsync();
-        var openExceptions = await repository.GetExceptionCountByStatusAsync("Open");
+        var openExceptions = await repository.GetExceptionCountByStatusAsync("Open") + await repository.GetExceptionCountByStatusAsync("Pending");
         var totalShipments = await totalShipmentsTask;
         var totalUsers = await totalUsersTask;
 
@@ -259,6 +259,80 @@ public class AdminService(IAdminRepository repository, ILogger<AdminService> log
             PageNumber = pageNumber,
             PageSize = pageSize,
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        };
+    }
+
+    public async Task<object> GetExceptionsByShipmentAsync(Guid shipmentId)
+    {
+        var items = await repository.GetExceptionsByShipmentAsync(shipmentId);
+
+        return new
+        {
+            Items = items.Select(x => new
+            {
+                x.ExceptionId,
+                x.ShipmentId,
+                x.ExceptionType,
+                x.Description,
+                x.Status,
+                x.CreatedAt,
+                x.ResolvedAt
+            }).ToList(),
+            TotalCount = items.Count,
+            ShipmentId = shipmentId
+        };
+    }
+
+    public async Task<object> CreateExceptionRecordAsync(CreateExceptionDto request)
+    {
+        var status = string.IsNullOrWhiteSpace(request.Status) ? "Pending" : request.Status.Trim();
+        var record = new ExceptionRecord
+        {
+            ExceptionId = Guid.NewGuid(),
+            ShipmentId = request.ShipmentId,
+            ExceptionType = request.ExceptionType.Trim(),
+            Description = request.Description.Trim(),
+            Status = status,
+            CreatedAt = DateTime.UtcNow,
+            ResolvedAt = request.ResolvedAt
+        };
+
+        await repository.AddExceptionAsync(record);
+        await repository.SaveChangesAsync();
+
+        return new
+        {
+            record.ExceptionId,
+            record.ShipmentId,
+            record.ExceptionType,
+            record.Description,
+            record.Status,
+            record.CreatedAt
+        };
+    }
+
+    public async Task<object?> ResolveExceptionRecordAsync(Guid id, ResolveExceptionDto request)
+    {
+        var record = await repository.GetExceptionAsync(id);
+        if (record is null) return null;
+
+        record.Status = "Resolved";
+        record.ResolvedAt = DateTime.UtcNow;
+        record.Description = string.IsNullOrWhiteSpace(record.Description)
+            ? request.Description.Trim()
+            : $"{record.Description} | Resolution: {request.Description.Trim()}";
+
+        await repository.SaveChangesAsync();
+
+        return new
+        {
+            record.ExceptionId,
+            record.ShipmentId,
+            record.ExceptionType,
+            record.Description,
+            record.Status,
+            record.CreatedAt,
+            record.ResolvedAt
         };
     }
 

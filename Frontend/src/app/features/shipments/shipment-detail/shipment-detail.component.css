@@ -55,6 +55,24 @@
 .muted { color: #94A3B8; }
 .empty-items { padding: 2rem; text-align: center; color: #94A3B8; font-size: 0.9375rem; }
 
+.issue-card { margin-top: 1rem; background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.issue-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #F1F5F9; background: #FFFBEB; }
+.issue-card-title-row { display: flex; gap: 0.875rem; align-items: flex-start; }
+.issue-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #FEF3C7; color: #B45309; }
+.issue-title { margin: 0; font-size: 0.9375rem; font-weight: 600; color: #0F172A; }
+.issue-sub { margin: 0.35rem 0 0; font-size: 0.8125rem; color: #78716C; line-height: 1.45; }
+.issue-form { padding: 1.25rem; }
+.issue-label { display: block; font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; }
+.issue-textarea { width: 100%; box-sizing: border-box; padding: 0.75rem 1rem; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 0.875rem; font-family: inherit; color: #0F172A; resize: vertical; min-height: 100px; }
+.issue-textarea:focus { outline: none; border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12); }
+.issue-hint { margin: 0.35rem 0 0; font-size: 0.8125rem; color: #DC2626; }
+.issue-hint-text { margin: 0 0 0.75rem; font-size: 0.875rem; color: #64748B; }
+.issue-cta { padding: 1rem 1.25rem 1.25rem; border-top: 1px solid #F1F5F9; background: #F8FAFC; }
+.issue-actions { margin-top: 1rem; display: flex; justify-content: flex-end; }
+.btn-issue-submit { padding: 0.5rem 1.125rem; background: #4F46E5; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-issue-submit:hover:not(:disabled) { background: #4338CA; }
+.btn-issue-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
 .not-found { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem; background: #fff; border: 1px solid #E5E7EB; border-radius: 14px; color: #94A3B8; font-size: 0.9375rem; }
 .btn-back { padding: 0.5rem 1rem; background: #EEF2FF; color: #4F46E5; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; }
 

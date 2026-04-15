@@ -9,12 +9,15 @@ public class EmailService : IEmailService
 {
     private readonly ILogger<EmailService> _logger;
     private readonly EmailSettings _emailSettings;
+    private readonly IConfiguration _configuration;
 
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _logger = logger;
+        _configuration = configuration;
         _emailSettings = new EmailSettings();
         configuration.GetSection("EmailSettings").Bind(_emailSettings);
+        NormalizeEmailSettings();
     }
 
     public async Task<bool> SendOtpEmailAsync(string recipientEmail, string otp)
@@ -101,6 +104,11 @@ public class EmailService : IEmailService
     {
         try
         {
+            if (!ValidateEmailConfiguration())
+            {
+                return false;
+            }
+
             using var client = new SmtpClient(_emailSettings.SmtpHost, _emailSettings.Port)
             {
                 EnableSsl = _emailSettings.EnableSsl,
@@ -126,6 +134,87 @@ public class EmailService : IEmailService
             _logger.LogError(ex, "Error sending email to {Email}", recipientEmail);
             return false;
         }
+    }
+
+    private void NormalizeEmailSettings()
+    {
+        _emailSettings.SmtpHost = FirstNonEmpty(
+            _emailSettings.SmtpHost,
+            _configuration["EmailSettings:SmtpHost"],
+            _configuration["SMTP_HOST"]) ?? "smtp.gmail.com";
+
+        _emailSettings.SenderName = FirstNonEmpty(
+            _emailSettings.SenderName,
+            _configuration["EmailSettings:SenderName"],
+            _configuration["SMTP_SENDER_NAME"]) ?? "SmartShip Logistics";
+
+        _emailSettings.SenderEmail = FirstNonEmpty(
+            _emailSettings.SenderEmail,
+            _configuration["EmailSettings:SenderEmail"],
+            _configuration["SMTP_SENDER_EMAIL"],
+            _configuration["SMTP_USERNAME"]) ?? string.Empty;
+
+        _emailSettings.SenderPassword = FirstNonEmpty(
+            _emailSettings.SenderPassword,
+            _configuration["EmailSettings:SenderPassword"],
+            _configuration["SMTP_SENDER_PASSWORD"],
+            _configuration["SMTP_PASSWORD"]) ?? string.Empty;
+
+        var configuredPort = _configuration["EmailSettings:Port"] ?? _configuration["SMTP_PORT"];
+        if (!int.TryParse(configuredPort, out var parsedPort) || parsedPort <= 0)
+        {
+            parsedPort = _emailSettings.Port > 0 ? _emailSettings.Port : 587;
+        }
+
+        _emailSettings.Port = parsedPort;
+
+        var configuredSsl = _configuration["EmailSettings:EnableSsl"] ?? _configuration["SMTP_ENABLE_SSL"];
+        if (bool.TryParse(configuredSsl, out var parsedSsl))
+        {
+            _emailSettings.EnableSsl = parsedSsl;
+        }
+    }
+
+    private bool ValidateEmailConfiguration()
+    {
+        if (string.IsNullOrWhiteSpace(_emailSettings.SmtpHost))
+        {
+            _logger.LogError("Email is not configured: missing SMTP host.");
+            return false;
+        }
+
+        if (_emailSettings.Port <= 0)
+        {
+            _logger.LogError("Email is not configured: invalid SMTP port {Port}.", _emailSettings.Port);
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
+        {
+            _logger.LogError("Email is not configured: missing sender email. Set EmailSettings:SenderEmail or SMTP_SENDER_EMAIL.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(_emailSettings.SenderPassword))
+        {
+            _logger.LogError("Email is not configured: missing sender password. Set EmailSettings:SenderPassword or SMTP_SENDER_PASSWORD.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 }
 

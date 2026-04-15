@@ -54,11 +54,11 @@ export class TrackingComponent implements OnInit {
   }
 
   isCurrentStep(stepStatus: string): boolean {
-    return this.trackingData?.status === stepStatus;
+    return this.normalizeStatus(this.trackingData?.status) === stepStatus;
   }
 
   getJourneyProgressStatus(): string {
-    const status = this.trackingData?.status ?? '';
+    const status = this.normalizeStatus(this.trackingData?.status);
     if (!status) return '';
 
     if (status === 'Delayed' || status === 'Returned' || status === 'Failed') {
@@ -66,6 +66,27 @@ export class TrackingComponent implements OnInit {
     }
 
     return this.progressOrder.includes(status) ? status : 'Booked';
+  }
+
+  get latestEvent(): any | null {
+    return this.timeline.length > 0 ? this.timeline[this.timeline.length - 1] : null;
+  }
+
+  get reachedLocationLabel(): string {
+    const eventLocation = this.latestEvent?.location ?? this.trackingData?.location;
+    if (!eventLocation) return 'Awaiting first route update';
+    return eventLocation;
+  }
+
+  get terminalReason(): string {
+    const status = this.normalizeStatus(this.trackingData?.status);
+    if (!['Delayed', 'Returned', 'Failed'].includes(status)) {
+      return '';
+    }
+
+    const candidate = this.latestEvent?.description ?? '';
+    const match = /Reason:\s*(.+)$/i.exec(candidate);
+    return match?.[1]?.trim() ?? candidate;
   }
 
   ngOnInit(): void {
@@ -118,7 +139,13 @@ export class TrackingComponent implements OnInit {
   private loadTimeline(tn: string): void {
     this.trackingService.getTimeline(tn, true).subscribe({
       next: (events) => {
-        this.timeline = events;
+        this.timeline = (events ?? [])
+          .map((event: any) => this.normalizeTimelineEvent(event))
+          .sort((a: any, b: any) => {
+            const first = new Date(a.timestamp).getTime();
+            const second = new Date(b.timestamp).getTime();
+            return Number.isNaN(first) || Number.isNaN(second) ? 0 : first - second;
+          });
         this.isLoading = false;
       },
       error: () => {
@@ -145,9 +172,41 @@ export class TrackingComponent implements OnInit {
     return {
       ...data,
       trackingNumber: data.trackingNumber ?? data.TrackingNumber ?? trackingNumber,
-      status: data.status ?? data.Status ?? data.currentStatus ?? data.CurrentStatus ?? '',
+      status: this.normalizeStatus(data.status ?? data.Status ?? data.currentStatus ?? data.CurrentStatus ?? ''),
       location: data.location ?? data.Location ?? data.currentLocation ?? data.CurrentLocation ?? null,
       timestamp: data.timestamp ?? data.Timestamp ?? data.lastUpdatedAt ?? data.LastUpdatedAt ?? null
     };
+  }
+
+  private normalizeTimelineEvent(event: any): any {
+    const status = this.normalizeStatus(event?.status ?? event?.Status ?? '');
+    return {
+      ...event,
+      status,
+      location: event?.location ?? event?.Location ?? '',
+      description: event?.description ?? event?.Description ?? '',
+      timestamp: event?.timestamp ?? event?.Timestamp ?? null
+    };
+  }
+
+  private normalizeStatus(raw: string): string {
+    const status = String(raw ?? '').trim();
+    if (!status) return '';
+
+    const key = status.toLowerCase().replace(/[\s_-]+/g, '');
+    const map: Record<string, string> = {
+      booked: 'Booked',
+      pickedup: 'PickedUp',
+      intransit: 'InTransit',
+      outfordelivery: 'OutForDelivery',
+      delivered: 'Delivered',
+      delayed: 'Delayed',
+      returned: 'Returned',
+      failed: 'Failed',
+      draft: 'Draft',
+      created: 'Booked'
+    };
+
+    return map[key] ?? status;
   }
 }

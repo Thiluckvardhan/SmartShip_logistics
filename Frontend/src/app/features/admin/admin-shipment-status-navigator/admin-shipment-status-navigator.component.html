@@ -1,0 +1,67 @@
+<nav class="breadcrumb">
+  <a routerLink="/admin">Dashboard</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <a routerLink="/admin/shipments">Shipments</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span>Status Navigator</span>
+</nav>
+
+<div *ngIf="isLoading()" class="loading-card">Loading shipment...</div>
+
+<div *ngIf="!isLoading() && shipment() as current" class="page">
+  <div class="header-card">
+    <div>
+      <h1>Shipment Status Navigator</h1>
+      <p>Choose route details and update status with reason (when required).</p>
+    </div>
+    <div class="meta">
+      <div class="tracking">{{ current.trackingNumber }}</div>
+      <div class="status">Current: {{ persistedStatus() || current.status }}</div>
+    </div>
+  </div>
+
+  <div class="banner-warn" *ngIf="nextStatusOptions().length === 0">
+    There are no allowed next statuses for this shipment (it may already be delivered or returned).
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-card">
+    <div class="row">
+      <label>Next status</label>
+      <select formControlName="status" [class.input-invalid]="form.controls.status.touched && form.controls.status.invalid">
+        <option value="">Select next status</option>
+        <option *ngFor="let option of nextStatusOptions()" [value]="option.value">{{ option.label }}</option>
+      </select>
+      <p class="hint" *ngIf="nextStatusOptions().length === 1">Only one step is available from the current state.</p>
+      <p class="error" *ngIf="form.controls.status.touched && form.controls.status.hasError('required')">Please select a status.</p>
+    </div>
+
+    <div class="row">
+      <label>Hub</label>
+      <select formControlName="hubId" [class.input-invalid]="form.controls.hubId.touched && form.controls.hubId.invalid">
+        <option value="">Select hub</option>
+        <option *ngFor="let hub of hubs()" [value]="hub.hubId">{{ hub.name }}</option>
+      </select>
+      <p class="error" *ngIf="form.controls.hubId.touched && form.controls.hubId.hasError('required')">Hub is required.</p>
+    </div>
+
+    <div class="row">
+      <label>Service location</label>
+      <select formControlName="serviceLocationId" [class.input-invalid]="form.controls.serviceLocationId.touched && form.controls.serviceLocationId.invalid">
+        <option value="">Select service location</option>
+        <option *ngFor="let location of activeLocations()" [value]="location.locationId">{{ location.name }}</option>
+      </select>
+      <p class="error" *ngIf="form.controls.serviceLocationId.touched && form.controls.serviceLocationId.hasError('required')">Service location is required.</p>
+    </div>
+
+    <div class="row" *ngIf="requiresReason()">
+      <label>Reason <span class="req">*</span></label>
+      <textarea formControlName="reason" rows="4" placeholder="Enter reason to show in customer tracking"></textarea>
+      <p class="error" *ngIf="form.controls.reason.touched && form.controls.reason.errors?.['required']">Reason is required.</p>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-secondary" [routerLink]="['/admin/shipments', current.id]">Cancel</a>
+      <button class="btn btn-primary" type="submit" [disabled]="isSaving() || nextStatusOptions().length === 0">{{ isSaving() ? 'Updating...' : 'Update status' }}</button>
+    </div>
+  </form>
+</div>

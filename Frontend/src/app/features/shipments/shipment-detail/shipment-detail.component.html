@@ -57,7 +57,6 @@
       <p class="summary-value">₹{{ (shipment.estimatedRate ?? 0) | number:'1.2-2' }}</p>
     </div>
   </div>
-
   <!-- Addresses -->
   <div class="address-grid">
     <div class="address-card">
@@ -118,6 +117,69 @@
       </tbody>
     </table>
     <div class="empty-items" *ngIf="!shipment.items?.length">No items listed.</div>
+  </div>
+
+  <div class="issues-card">
+    <div class="section-header">
+      <h3>Issue history</h3>
+      <span *ngIf="isLoadingIssues">Loading...</span>
+    </div>
+    <div *ngIf="!isLoadingIssues && !issues.length" class="empty-state">
+      No issues reported yet.
+    </div>
+    <div *ngFor="let issue of issues" class="issue-item" [class.issue-resolved]="(issue.status || '').toLowerCase() === 'resolved'">
+      <div class="issue-item-header">
+        <strong>{{ issue.exceptionType || 'Issue' }}</strong>
+        <span>{{ issue.status || 'Pending' }}</span>
+      </div>
+      <p>{{ issue.description }}</p>
+      <p class="issue-meta">Raised on {{ issue.createdAt | date:'medium' }}</p>
+      <p class="issue-meta" *ngIf="issue.resolvedAt">Resolved on {{ issue.resolvedAt | date:'medium' }}</p>
+    </div>
+    <div class="issue-cta" *ngIf="!canReportIssue">
+      <p class="issue-hint-text">Book your shipment first, then you can raise Billing Issue or Other. Damaged Product is allowed only after delivery.</p>
+      <button type="button" class="btn-issue-submit" disabled>Report issue</button>
+    </div>
+  </div>
+
+  <div class="issue-card" *ngIf="canReportIssue">
+    <div class="issue-card-header">
+      <div class="issue-card-title-row">
+        <div class="issue-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="issue-title">Report an issue</h2>
+          <p class="issue-sub">Describe the problem. Our support team receives it with your tracking number.</p>
+        </div>
+      </div>
+    </div>
+    <form class="issue-form" [formGroup]="issueForm" (ngSubmit)="submitIssue()">
+      <label class="issue-label" for="issue-type">Issue type</label>
+      <select id="issue-type" class="issue-textarea" formControlName="issueType">
+        <option *ngFor="let option of issueTypeOptions" [value]="option.value">{{ option.label }}</option>
+      </select>
+      <label class="issue-label" for="issue-desc">What went wrong?</label>
+      <textarea
+        id="issue-desc"
+        class="issue-textarea"
+        formControlName="description"
+        rows="4"
+        placeholder="Tell us what happened"
+        [attr.aria-invalid]="issueForm.get('description')?.invalid && issueForm.get('description')?.touched"
+      ></textarea>
+      <p class="issue-hint" *ngIf="issueForm.get('description')?.touched && issueForm.get('description')?.hasError('minlength')">
+        Please enter at least 5 characters.
+      </p>
+      <div class="issue-actions">
+        <button type="submit" class="btn-issue-submit" [disabled]="issueForm.invalid || issueSubmitting">
+          {{ issueSubmitting ? 'Submitting…' : 'Submit issue' }}
+        </button>
+      </div>
+    </form>
+    <p class="issue-hint-text">{{ issueAvailabilityMessage }}</p>
   </div>
 
 </div>

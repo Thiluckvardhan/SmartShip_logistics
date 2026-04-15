@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { nameValidator } from '../../../shared/validators/custom-validators';
 
 @Component({
   selector: 'app-hubs',
@@ -25,10 +26,10 @@ export class HubsComponent implements OnInit {
   editingId: string | null = null;
 
   form: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
+    name: ['', [Validators.required, nameValidator()]],
     address: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(500)]],
     contactNumber: ['', [Validators.required, Validators.maxLength(30)]],
-    managerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
+    managerName: ['', [Validators.required, nameValidator()]],
     email: ['', [Validators.required, Validators.email]],
     isActive: [true]
   });

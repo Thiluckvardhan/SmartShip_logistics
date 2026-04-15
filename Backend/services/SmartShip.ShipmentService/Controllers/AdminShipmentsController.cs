@@ -33,6 +33,17 @@ public class AdminShipmentsController(IShipmentService shipmentService) : Contro
                 : BadRequest(new { message = result.Message });
     }
 
+    [HttpPut("/api/shipments/{id:guid}/admin-update-status")]
+    public async Task<IActionResult> AdminUpdateStatus(Guid id, [FromBody] AdminUpdateShipmentJourneyDto request)
+    {
+        var result = await shipmentService.UpdateShipmentStatusWithJourneyAsync(id, request);
+        return result.Ok
+            ? Ok(result.Data)
+            : result.Message == "Shipment not found."
+                ? NotFound(new { message = result.Message })
+                : BadRequest(new { message = result.Message });
+    }
+
     [HttpPut("/api/shipments/{id:guid}/pickup")]
     [HttpPut("/shipment/api/shipments/{id:guid}/pickup")]
     public Task<IActionResult> MarkPickedUp(Guid id)

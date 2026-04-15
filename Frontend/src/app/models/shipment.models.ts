@@ -41,6 +41,13 @@ export interface UpdateShipmentStatusDto {
   status: ShipmentStatus;
 }
 
+export interface AdminUpdateShipmentJourneyDto {
+  status: string;
+  hubName?: string;
+  serviceLocationName?: string;
+  reason?: string;
+}
+
 export interface CalculateRateDto {
   totalWeight: number;
 }

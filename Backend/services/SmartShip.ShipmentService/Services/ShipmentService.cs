@@ -25,7 +25,7 @@ public class ShipmentService(
         [ShipmentStatus.Draft] = [ShipmentStatus.Booked],
         [ShipmentStatus.Booked] = [ShipmentStatus.PickedUp, ShipmentStatus.Delayed, ShipmentStatus.Failed],
         [ShipmentStatus.PickedUp] = [ShipmentStatus.InTransit, ShipmentStatus.Delayed, ShipmentStatus.Failed],
-        [ShipmentStatus.InTransit] = [ShipmentStatus.OutForDelivery, ShipmentStatus.Delayed, ShipmentStatus.Failed],
+        [ShipmentStatus.InTransit] = [ShipmentStatus.InTransit, ShipmentStatus.OutForDelivery, ShipmentStatus.Delayed, ShipmentStatus.Failed],
         [ShipmentStatus.OutForDelivery] = [ShipmentStatus.Delivered, ShipmentStatus.Delayed, ShipmentStatus.Failed, ShipmentStatus.Returned],
         [ShipmentStatus.Delayed] = [ShipmentStatus.InTransit, ShipmentStatus.OutForDelivery, ShipmentStatus.Failed, ShipmentStatus.Returned],
         [ShipmentStatus.Failed] = [ShipmentStatus.Returned],
@@ -205,7 +205,30 @@ public class ShipmentService(
         return MapShipment(shipment);
     }
 
-    public async Task<(bool Ok, string? Message, object? Data)> UpdateShipmentStatusAsync(Guid id, ShipmentStatus newStatus)
+    public async Task<(bool Ok, string? Message, object? Data)> UpdateShipmentStatusWithJourneyAsync(Guid id, AdminUpdateShipmentJourneyDto request)
+    {
+        var rawStatus = request.Status.Trim();
+        var normalizedStatus = rawStatus.Replace("-", string.Empty).Replace(" ", string.Empty);
+        if (!Enum.TryParse<ShipmentStatus>(normalizedStatus, true, out var parsedStatus))
+        {
+            return (false, $"Unsupported status '{rawStatus}'.", null);
+        }
+
+        var reasonRequired = parsedStatus is ShipmentStatus.Delayed or ShipmentStatus.Returned or ShipmentStatus.Failed;
+        if (reasonRequired && string.IsNullOrWhiteSpace(request.Reason))
+        {
+            return (false, $"Reason is required when setting status to '{parsedStatus}'.", null);
+        }
+
+        var hub = request.HubName?.Trim();
+        var location = request.ServiceLocationName?.Trim();
+        var locationLabel = BuildLocationLabel(hub, location);
+        var remarks = BuildStatusRemarks(parsedStatus, request.Reason?.Trim(), locationLabel);
+
+        return await UpdateShipmentStatusAsync(id, parsedStatus, locationLabel, remarks);
+    }
+
+    public async Task<(bool Ok, string? Message, object? Data)> UpdateShipmentStatusAsync(Guid id, ShipmentStatus newStatus, string? location = null, string? remarks = null)
     {
         var shipment = await repository.GetShipmentAsync(id);
         if (shipment is null) return (false, "Shipment not found.", null);
@@ -244,15 +267,15 @@ public class ShipmentService(
             });
         }
 
-        if (newStatus is ShipmentStatus.Delayed or ShipmentStatus.Failed or ShipmentStatus.Returned)
+        if (newStatus is ShipmentStatus.PickedUp or ShipmentStatus.InTransit or ShipmentStatus.OutForDelivery or ShipmentStatus.Delayed or ShipmentStatus.Failed or ShipmentStatus.Returned)
         {
             await QueueOutboxEventAsync(new TrackingUpdatedEvent
             {
                 ShipmentId = shipment.ShipmentId,
                 TrackingNumber = shipment.TrackingNumber,
                 Status = newStatus.ToString().ToUpperInvariant(),
-                Location = "System",
-                Remarks = $"Shipment status changed to {newStatus}."
+                Location = string.IsNullOrWhiteSpace(location) ? "System" : location.Trim(),
+                Remarks = string.IsNullOrWhiteSpace(remarks) ? $"Shipment status changed to {newStatus}." : remarks.Trim()
             });
         }
 
@@ -294,6 +317,112 @@ public class ShipmentService(
 
         await repository.SaveChangesAsync();
         return (true, null);
+    }
+
+    public async Task<(bool Ok, string? Message, object? Data)> ReportShipmentIssueAsync(Guid id, Guid customerId, string issueType, string description)
+    {
+        var shipment = await repository.GetShipmentAsync(id);
+        if (shipment is null) return (false, "Shipment not found.", null);
+        if (shipment.CustomerId != customerId)
+            return (false, "You can report issues only for your own shipments.", null);
+
+        var normalizedIssueType = issueType.Trim();
+        if (shipment.Status == ShipmentStatus.Draft)
+        {
+            return (false, "Book your shipment before reporting an issue to support.", null);
+        }
+
+        if (normalizedIssueType.Equals("Damaged Product", StringComparison.OrdinalIgnoreCase) && shipment.Status != ShipmentStatus.Delivered)
+        {
+            return (false, "Damaged Product issues can be reported only after the shipment is delivered.", null);
+        }
+
+        var adminClient = httpClientFactory.CreateClient("AdminService");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/admin/exceptions");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
+        request.Content = JsonContent.Create(new
+        {
+            shipmentId = id,
+            exceptionType = normalizedIssueType,
+            status = "Pending",
+            resolvedAt = (DateTime?)null,
+            description = description.Trim()
+        });
+
+        try
+        {
+            using var response = await adminClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errBody = await response.Content.ReadAsStringAsync();
+                logger.LogWarning(
+                    "Admin exception record failed for shipment {ShipmentId}: {Status} {Body}",
+                    id,
+                    response.StatusCode,
+                    errBody);
+                return (false, "Unable to register your report. Please try again later.", null);
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<object>();
+            return (true, null, payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Admin exception record request failed for shipment {ShipmentId}", id);
+            return (false, "Unable to register your report. Please try again later.", null);
+        }
+    }
+
+    public async Task<(bool Ok, string? Message, object? Data)> GetShipmentIssuesAsync(Guid id, Guid requesterId, bool isAdmin)
+    {
+        var shipment = await repository.GetShipmentAsync(id);
+        if (shipment is null) return (false, "Shipment not found.", null);
+
+        if (!isAdmin && shipment.CustomerId != requesterId)
+        {
+            return (false, "You can view only your own shipment issues.", null);
+        }
+
+        var adminClient = httpClientFactory.CreateClient("AdminService");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/admin/exceptions/shipment/{id}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", serviceTokenGenerator.GenerateToken());
+
+        try
+        {
+            using var response = await adminClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning(
+                    "Admin exception lookup failed for shipment {ShipmentId}: {StatusCode}",
+                    id,
+                    response.StatusCode);
+
+                return (true, null, new
+                {
+                    Items = Array.Empty<object>(),
+                    TotalCount = 0,
+                    ShipmentId = id
+                });
+            }
+
+            var payload = await response.Content.ReadFromJsonAsync<object>() ?? new
+            {
+                Items = Array.Empty<object>(),
+                TotalCount = 0,
+                ShipmentId = id
+            };
+            return (true, null, payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Admin exception lookup request failed for shipment {ShipmentId}", id);
+            return (true, null, new
+            {
+                Items = Array.Empty<object>(),
+                TotalCount = 0,
+                ShipmentId = id
+            });
+        }
     }
 
     public Task<object> CalculateRateAsync(CalculateRateDto request)
@@ -722,5 +851,37 @@ public class ShipmentService(
             Status = "Pending",
             AttemptCount = 0
         });
+    }
+
+    private static string BuildLocationLabel(string? hubName, string? locationName)
+    {
+        var parts = new[] { locationName, hubName }
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!.Trim())
+            .ToArray();
+
+        return parts.Length == 0 ? "System" : string.Join(" · ", parts);
+    }
+
+    private static string BuildStatusRemarks(ShipmentStatus status, string? reason, string locationLabel)
+    {
+        var movement = status switch
+        {
+            ShipmentStatus.PickedUp => "Shipment picked up by carrier.",
+            ShipmentStatus.InTransit => $"Shipment is in transit via {locationLabel}.",
+            ShipmentStatus.OutForDelivery => $"Shipment left {locationLabel} and is out for delivery.",
+            ShipmentStatus.Delayed => $"Shipment delayed at {locationLabel}.",
+            ShipmentStatus.Returned => $"Shipment returned from {locationLabel}.",
+            ShipmentStatus.Failed => $"Shipment delivery failed at {locationLabel}.",
+            ShipmentStatus.Delivered => "Shipment delivered.",
+            _ => $"Shipment status changed to {status}."
+        };
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return movement;
+        }
+
+        return $"{movement} Reason: {reason.Trim()}";
     }
 }

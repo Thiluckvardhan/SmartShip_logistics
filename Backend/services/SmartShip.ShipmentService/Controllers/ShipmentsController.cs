@@ -88,6 +88,41 @@ public class ShipmentsController(IShipmentService shipmentService) : ControllerB
         return Ok(await shipmentService.CalculateRateAsync(request));
     }
 
+    [HttpPost("/api/shipments/{id:guid}/report-issue")]
+    public async Task<IActionResult> ReportIssue(Guid id, [FromBody] ReportShipmentIssueDto request)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var result = await shipmentService.ReportShipmentIssueAsync(id, userId, request.IssueType, request.Description);
+        if (result.Ok) return Ok(result.Data);
+
+        return result.Message switch
+        {
+            "Shipment not found." => NotFound(new { message = result.Message }),
+            "You can report issues only for your own shipments." => StatusCode(StatusCodes.Status403Forbidden, new { message = result.Message }),
+            "Book your shipment before reporting an issue to support." => BadRequest(new { message = result.Message }),
+            _ => StatusCode(StatusCodes.Status502BadGateway, new { message = result.Message })
+        };
+    }
+
+    [HttpGet("/api/shipments/{id:guid}/issues")]
+    public async Task<IActionResult> GetShipmentIssues(Guid id)
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty) return Unauthorized();
+
+        var result = await shipmentService.GetShipmentIssuesAsync(id, userId, User.IsInRole("Admin"));
+        if (result.Ok) return Ok(result.Data);
+
+        return result.Message switch
+        {
+            "Shipment not found." => NotFound(new { message = result.Message }),
+            "You can view only your own shipment issues." => StatusCode(StatusCodes.Status403Forbidden, new { message = result.Message }),
+            _ => StatusCode(StatusCodes.Status502BadGateway, new { message = result.Message })
+        };
+    }
+
     [HttpDelete("/api/shipments/{id:guid}")]
     public async Task<IActionResult> DeleteShipment(Guid id)
     {

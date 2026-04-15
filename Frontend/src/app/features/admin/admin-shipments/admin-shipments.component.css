@@ -57,7 +57,7 @@
   background: #F8FAFC;
   border-bottom: 1px solid #F1F5F9;
 }
-.ss-table td { padding: 0.875rem 1rem; border-bottom: 1px solid #F8FAFC; color: #334155; }
+.ss-table td { padding: 0.875rem 1rem; border-bottom: 1px solid #F8FAFC; color: #334155; vertical-align: top; }
 .ss-table tr:last-child td { border-bottom: none; }
 .ss-table tbody tr:hover { background: #FAFAFA; }
 

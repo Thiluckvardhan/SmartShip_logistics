@@ -55,17 +55,7 @@
         <td>
           <div class="action-group">
             <button type="button" class="btn-view" (click)="viewShipment(s.id)">View</button>
-            <select class="action-select"
-              (change)="updateStatus(s.id, $any($event.target).value); $any($event.target).value = ''">
-              <option value="">Update status</option>
-              <option value="pickup">Picked Up</option>
-              <option value="in-transit">In Transit</option>
-              <option value="out-for-delivery">Out for Delivery</option>
-              <option value="delivered">Delivered</option>
-              <option value="failed">Failed</option>
-              <option value="delay">Delayed</option>
-              <option value="return">Returned</option>
-            </select>
+            <button type="button" class="btn-view" (click)="openStatusNavigator(s.id)">Update status</button>
           </div>
         </td>
       </tr>

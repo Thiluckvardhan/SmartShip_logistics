@@ -21,6 +21,11 @@
   overflow: hidden;
 }
 
+.sidebar-header {
+  padding: 0.875rem 0.75rem 0.75rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -161,7 +166,7 @@
   border-bottom: 1px solid #E5E7EB;
   display: flex;
   align-items: center;
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   gap: 1rem;
   position: sticky;
   top: 0;
@@ -218,7 +223,7 @@
 /* Page Content */
 .page-content {
   flex: 1;
-  padding: 1.75rem;
+  padding: 1.25rem;
 }
 
 /* Overlay */
@@ -252,5 +257,6 @@
   }
   .hamburger { display: flex; }
   .top-brand { display: block; }
+  .top-bar { padding: 0 1rem; }
   .page-content { padding: 1rem; }
 }

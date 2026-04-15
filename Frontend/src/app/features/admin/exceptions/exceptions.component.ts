@@ -47,7 +47,8 @@ export class ExceptionsComponent implements OnInit {
     this.isLoading = true;
     this.adminService.getExceptions(this.page, this.pageSize).subscribe({
       next: (res) => {
-        this.exceptions = res.items ?? res ?? [];
+        const items = res.items ?? res.Items ?? res ?? [];
+        this.exceptions = Array.isArray(items) ? items.map((item: any) => this.normalizeException(item)) : [];
         this.totalItems = res.totalCount ?? this.exceptions.length;
         this.isLoading = false;
       },
@@ -77,8 +78,8 @@ export class ExceptionsComponent implements OnInit {
 
   submitResolve(): void {
     if (this.resolveForm.invalid || !this.selectedId) return;
-    this.adminService.resolveShipment(this.selectedId, this.resolveForm.value).subscribe({
-      next: () => { this.notificationService.success('Shipment resolved'); this.closeModal(); this.load(); },
+    this.adminService.resolveException(this.selectedId, this.resolveForm.value).subscribe({
+      next: () => { this.notificationService.success('Exception resolved'); this.closeModal(); this.load(); },
       error: () => this.notificationService.error('Failed to resolve')
     });
   }
@@ -97,5 +98,18 @@ export class ExceptionsComponent implements OnInit {
       next: () => { this.notificationService.success('Shipment returned'); this.closeModal(); this.load(); },
       error: () => this.notificationService.error('Failed to return')
     });
+  }
+
+  private normalizeException(exception: any): any {
+    return {
+      id: exception?.id ?? exception?.Id ?? exception?.exceptionId ?? exception?.ExceptionId ?? '',
+      shipmentId: exception?.shipmentId ?? exception?.ShipmentId ?? '',
+      trackingNumber: exception?.trackingNumber ?? exception?.TrackingNumber ?? '',
+      exceptionType: exception?.exceptionType ?? exception?.ExceptionType ?? exception?.issueType ?? exception?.IssueType ?? '',
+      description: exception?.description ?? exception?.Description ?? '',
+      status: exception?.status ?? exception?.Status ?? 'Pending',
+      createdAt: exception?.createdAt ?? exception?.CreatedAt ?? '',
+      resolvedAt: exception?.resolvedAt ?? exception?.ResolvedAt ?? null
+    };
   }
 }
