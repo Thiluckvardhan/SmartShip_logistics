@@ -11,14 +11,18 @@ namespace SmartShip.TrackingService.Services;
 public class TrackingEventConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
+    private readonly ILogger<TrackingEventConsumer> _logger;
+    private readonly ConnectionFactory _factory;
     private readonly string _exchangeName;
     private readonly string[] _queues;
+    private IConnection? _connection;
+    private IModel? _channel;
+    private bool _isConsumerAttached;
 
-    public TrackingEventConsumer(IServiceProvider serviceProvider, IConfiguration config)
+    public TrackingEventConsumer(IServiceProvider serviceProvider, IConfiguration config, ILogger<TrackingEventConsumer> logger)
     {
         _serviceProvider = serviceProvider;
+        _logger = logger;
         _exchangeName = config["RabbitMQ:Exchange"] ?? "smartship_events";
 
         var shipmentCreatedQueue = config["RabbitMQ:Queues:ShipmentCreated"] ?? "shipment-created-queue";
@@ -28,18 +32,64 @@ public class TrackingEventConsumer : BackgroundService
 
         _queues = [shipmentCreatedQueue, shipmentPickedUpQueue, shipmentDeliveredQueue, shipmentExceptionQueue];
 
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             HostName = config["RabbitMQ:Host"] ?? "localhost",
             UserName = config["RabbitMQ:Username"] ?? "guest",
             Password = config["RabbitMQ:Password"] ?? "guest"
         };
+    }
 
-        _connection = factory.CreateConnection();
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                EnsureConnected();
+                AttachConsumerIfNeeded();
+
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                CleanupConnection();
+                _logger.LogWarning(ex, "Tracking consumer could not connect to RabbitMQ. Retrying in 5 seconds.");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+        }
+    }
+
+    private void EnsureConnected()
+    {
+        if (_connection is { IsOpen: true } && _channel is { IsOpen: true })
+        {
+            return;
+        }
+
+        CleanupConnection();
+
+        _connection = _factory.CreateConnection();
         _channel = _connection.CreateModel();
+        _isConsumerAttached = false;
+
+        _connection.ConnectionShutdown += (_, args) =>
+        {
+            _logger.LogWarning("RabbitMQ connection closed: {ReplyText}", args.ReplyText);
+            _isConsumerAttached = false;
+        };
 
         _channel.ExchangeDeclare(_exchangeName, ExchangeType.Direct, durable: true, autoDelete: false);
         _channel.BasicQos(0, 20, false);
+
+        var shipmentCreatedQueue = _queues[0];
+        var shipmentPickedUpQueue = _queues[1];
+        var shipmentDeliveredQueue = _queues[2];
+        var shipmentExceptionQueue = _queues[3];
 
         _channel.QueueDeclare(shipmentCreatedQueue, true, false, false);
         _channel.QueueBind(shipmentCreatedQueue, _exchangeName, nameof(ShipmentCreatedEvent));
@@ -52,11 +102,19 @@ public class TrackingEventConsumer : BackgroundService
 
         _channel.QueueDeclare(shipmentExceptionQueue, true, false, false);
         _channel.QueueBind(shipmentExceptionQueue, _exchangeName, nameof(TrackingUpdatedEvent));
+
+        _logger.LogInformation("Tracking consumer connected to RabbitMQ host {Host}.", _factory.HostName);
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    private void AttachConsumerIfNeeded()
     {
-        var consumer = new EventingBasicConsumer(_channel);
+        if (_isConsumerAttached || _channel is not { IsOpen: true })
+        {
+            return;
+        }
+
+        var channel = _channel;
+        var consumer = new EventingBasicConsumer(channel);
 
         consumer.Received += async (_, ea) =>
         {
@@ -135,27 +193,52 @@ public class TrackingEventConsumer : BackgroundService
                 }
 
                 await repo.SaveChangesAsync();
-                _channel.BasicAck(ea.DeliveryTag, false);
+                channel.BasicAck(ea.DeliveryTag, false);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Tracking consumer failed: {ex.Message}");
-                _channel.BasicNack(ea.DeliveryTag, false, requeue: false);
+                _logger.LogError(ex, "Tracking consumer failed to process message with routing key {RoutingKey}", ea.RoutingKey);
+                channel.BasicNack(ea.DeliveryTag, false, requeue: false);
             }
         };
 
         foreach (var queue in _queues.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            _channel.BasicConsume(queue, false, consumer);
+            channel.BasicConsume(queue, false, consumer);
         }
 
-        return Task.CompletedTask;
+        _isConsumerAttached = true;
+        _logger.LogInformation("Tracking consumer subscriptions attached for {QueueCount} queues.", _queues.Length);
+    }
+
+    private void CleanupConnection()
+    {
+        try
+        {
+            _channel?.Dispose();
+        }
+        catch
+        {
+            // Ignore cleanup exceptions.
+        }
+
+        try
+        {
+            _connection?.Dispose();
+        }
+        catch
+        {
+            // Ignore cleanup exceptions.
+        }
+
+        _channel = null;
+        _connection = null;
+        _isConsumerAttached = false;
     }
 
     public override void Dispose()
     {
-        _channel.Dispose();
-        _connection.Dispose();
+        CleanupConnection();
         base.Dispose();
     }
 }
