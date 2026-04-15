@@ -1,8 +1,8 @@
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; }
 .page-title { font-size: 1.5rem; font-weight: 700; color: #0F172A; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
 .page-sub { font-size: 0.875rem; color: #64748B; }
-.btn-accent { display: flex; align-items: center; gap: 0.375rem; padding: 0.625rem 1.125rem; background: #F97316; color: #fff; border-radius: 9px; text-decoration: none; font-size: 0.875rem; font-weight: 600; transition: background 0.15s, transform 0.15s; box-shadow: 0 2px 8px rgba(249,115,22,0.3); white-space: nowrap; }
-.btn-accent:hover { background: #EA580C; transform: translateY(-1px); }
+.btn-accent { display: flex; align-items: center; gap: 0.375rem; padding: 0.625rem 1.125rem; background: #2E2E2E; color: #fff; border-radius: 9px; text-decoration: none; font-size: 0.875rem; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); white-space: nowrap; }
+.btn-accent:hover { opacity: 0.9; }
 
 .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .search-wrap { display: flex; align-items: center; gap: 0.5rem; background: #fff; border: 1px solid #E5E7EB; border-radius: 9px; padding: 0.5rem 0.875rem; flex: 1; min-width: 200px; }
@@ -19,28 +19,28 @@
 .ss-table td { padding: 0.875rem 1rem; border-bottom: 1px solid #F8FAFC; color: #334155; }
 .ss-table tr:last-child td { border-bottom: none; }
 .ss-table tbody tr:hover { background: #FAFAFA; }
-.mono { font-family: monospace; font-size: 0.8125rem; color: #4F46E5; font-weight: 600; }
+.mono { font-family: monospace; font-size: 0.8125rem; color: #2E2E2E; font-weight: 600; }
 .tracking-link { text-decoration: none; }
 .tracking-link:hover { text-decoration: underline; }
 .tracking-sub { margin-top: 0.2rem; font-size: 0.72rem; color: #94A3B8; font-family: monospace; }
 .muted { color: #94A3B8; font-size: 0.8125rem; }
 
 .status-badge { display: inline-flex; padding: 0.2rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-.status-draft        { background: #F1F5F9; color: #64748B; }
-.status-booked       { background: #EFF6FF; color: #3B82F6; }
-.status-pickedup     { background: #E0F2FE; color: #0369A1; }
-.status-intransit    { background: #FEF9C3; color: #A16207; }
-.status-outfordelivery { background: #FEF3C7; color: #B45309; }
-.status-delivered    { background: #DCFCE7; color: #15803D; }
-.status-delayed      { background: #FFEDD5; color: #C2410C; }
-.status-failed       { background: #FEE2E2; color: #B91C1C; }
-.status-returned     { background: #F3E8FF; color: #7E22CE; }
+.status-draft        { background: #F7F7F7; color: #4A4A4A; }
+.status-booked       { background: #E5E5E5; color: #2E2E2E; }
+.status-pickedup     { background: #D4D4D4; color: #1A1A1A; }
+.status-intransit    { background: #C4C4C4; color: #1A1A1A; }
+.status-outfordelivery { background: #B4B4B4; color: #1A1A1A; }
+.status-delivered    { background: #9E9E9E; color: #FFFFFF; }
+.status-delayed      { background: #8A8A8A; color: #FFFFFF; }
+.status-failed       { background: #6B6B6B; color: #FFFFFF; }
+.status-returned     { background: #4A4A4A; color: #FFFFFF; }
 
-.btn-view { padding: 0.3rem 0.75rem; background: #EEF2FF; color: #4F46E5; border-radius: 7px; text-decoration: none; font-size: 0.8125rem; font-weight: 600; transition: background 0.15s; }
-.btn-view:hover { background: #E0E7FF; }
+.btn-view { padding: 0.3rem 0.75rem; background: #F7F7F7; color: #2E2E2E; border-radius: 7px; text-decoration: none; font-size: 0.8125rem; font-weight: 600; }
+.btn-view:hover { opacity: 0.8; }
 
 .empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem; color: #94A3B8; font-size: 0.9375rem; }
-.btn-accent-sm { padding: 0.5rem 1rem; background: #F97316; color: #fff; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; }
+.btn-accent-sm { padding: 0.5rem 1rem; background: #2E2E2E; color: #fff; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; }
 
 .pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; border-top: 1px solid #F1F5F9; }
 .page-btn { display: flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.875rem; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 0.875rem; color: #334155; cursor: pointer; transition: background 0.15s; }

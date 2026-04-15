@@ -13,21 +13,21 @@
 .ss-table tr:last-child td { border-bottom: none; }
 .ss-table tbody tr:hover { background: #FAFAFA; }
 
-.mono { font-family: monospace; font-size: 0.8125rem; color: #4F46E5; font-weight: 600; }
+.mono { font-family: monospace; font-size: 0.8125rem; color: #2E2E2E; font-weight: 600; }
 .muted { color: #94A3B8; font-size: 0.8125rem; }
 .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .type-badge { display: inline-flex; padding: 0.2rem 0.625rem; background: #F1F5F9; color: #475569; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
 .status-badge { display: inline-flex; padding: 0.2rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-.status-resolved { background: #DCFCE7; color: #15803D; }
-.status-pending  { background: #FEF9C3; color: #A16207; }
+.status-resolved { background: #E5E5E5; color: #2E2E2E; }
+.status-pending  { background: #F7F7F7; color: #4A4A4A; }
 
 .action-btns { display: flex; gap: 0.375rem; }
-.btn-action { padding: 0.3rem 0.625rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: opacity 0.15s; }
+.btn-action { padding: 0.3rem 0.625rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
 .btn-action:hover { opacity: 0.85; }
-.btn-resolve { background: #DCFCE7; color: #15803D; border-color: #BBF7D0; }
-.btn-delay   { background: #FEF9C3; color: #A16207; border-color: #FDE68A; }
-.btn-return  { background: #FEE2E2; color: #B91C1C; border-color: #FECACA; }
+.btn-resolve { background: #E5E5E5; color: #2E2E2E; border-color: #D4D4D4; }
+.btn-delay   { background: #F7F7F7; color: #4A4A4A; border-color: #E5E5E5; }
+.btn-return  { background: #D4D4D4; color: #1A1A1A; border-color: #C4C4C4; }
 
 .empty-row { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem; color: #94A3B8; font-size: 0.9375rem; }
 
@@ -43,24 +43,24 @@
 
 .modal-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
 .modal-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.modal-icon-green  { background: #DCFCE7; color: #15803D; }
-.modal-icon-orange { background: #FEF9C3; color: #A16207; }
-.modal-icon-red    { background: #FEE2E2; color: #B91C1C; }
+.modal-icon-green  { background: #E5E5E5; color: #2E2E2E; }
+.modal-icon-orange { background: #F7F7F7; color: #4A4A4A; }
+.modal-icon-red    { background: #D4D4D4; color: #1A1A1A; }
 
 .modal-header h3 { font-size: 1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.25rem; }
 .modal-header p  { font-size: 0.875rem; color: #64748B; }
 
 .field-group { margin-bottom: 1.25rem; }
 .field-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
-.modal-textarea { width: 100%; padding: 0.75rem; border: 1.5px solid #E5E7EB; border-radius: 10px; font-size: 0.875rem; font-family: inherit; color: #334155; resize: vertical; outline: none; transition: border-color 0.2s; }
-.modal-textarea:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+.modal-textarea { width: 100%; padding: 0.75rem; border: 1.5px solid #E5E7EB; border-radius: 10px; font-size: 0.875rem; font-family: inherit; color: #334155; resize: vertical; outline: none; }
+.modal-textarea:focus { border-color: #2E2E2E; }
 .field-error { margin-top: 0.375rem; font-size: 0.8125rem; color: #EF4444; }
 
 .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; }
 .btn-cancel { padding: 0.625rem 1.25rem; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: #64748B; cursor: pointer; transition: background 0.15s; }
 .btn-cancel:hover { background: #F1F5F9; }
-.btn-confirm { padding: 0.625rem 1.25rem; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.btn-confirm { padding: 0.625rem 1.25rem; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
 .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-confirm-green  { background: #22C55E; color: #fff; }
-.btn-confirm-orange { background: #F59E0B; color: #fff; }
-.btn-confirm-red    { background: #EF4444; color: #fff; }
+.btn-confirm-green  { background: #6B6B6B; color: #fff; }
+.btn-confirm-orange { background: #8A8A8A; color: #fff; }
+.btn-confirm-red    { background: #4A4A4A; color: #fff; }

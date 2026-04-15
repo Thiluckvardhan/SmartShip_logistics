@@ -24,15 +24,15 @@
 }
 
 .toast-success {
-  background: var(--success, #16a34a);
+  background: var(--success, #6B6B6B);
 }
 
 .toast-error {
-  background: var(--danger, #dc2626);
+  background: var(--danger, #4A4A4A);
 }
 
 .toast-info {
-  background: var(--primary, #2563eb);
+  background: var(--primary, #2E2E2E);
 }
 
 .toast-message {
@@ -49,7 +49,6 @@
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  transition: color 0.15s;
 }
 
 .toast-dismiss:hover {

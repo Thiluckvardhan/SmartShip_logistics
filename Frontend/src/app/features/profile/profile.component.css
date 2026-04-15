@@ -28,7 +28,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #4f46e5;
+  background: #2E2E2E;
   color: #fff;
   font-size: 1.5rem;
   font-weight: 700;
@@ -60,8 +60,8 @@
 .role-badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
-  background: #ebf4ff;
-  color: #3182ce;
+  background: #F7F7F7;
+  color: #2E2E2E;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -110,33 +110,31 @@
 }
 
 .form-control:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  border-color: #2E2E2E;
 }
 
 .form-control.is-invalid {
-  border-color: #e53e3e;
+  border-color: #4A4A4A;
 }
 
 .error-message {
   font-size: 0.8125rem;
-  color: #e53e3e;
+  color: #4A4A4A;
 }
 
 .btn-primary {
   padding: 0.5rem 1.25rem;
-  background: #4f46e5;
+  background: #2E2E2E;
   color: #fff;
   border: none;
   border-radius: 0.375rem;
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #4338ca;
+  opacity: 0.9;
 }
 
 .btn-primary:disabled {
@@ -147,7 +145,7 @@
 /* Danger zone */
 .danger-zone {
   background: #fff;
-  border: 1px solid #fc8181;
+  border: 1px solid #E5E5E5;
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -156,7 +154,7 @@
 .danger-zone h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #c53030;
+  color: #4A4A4A;
   margin: 0 0 0.5rem;
 }
 
@@ -168,16 +166,15 @@
 
 .btn-danger {
   padding: 0.5rem 1.25rem;
-  background: #e53e3e;
+  background: #4A4A4A;
   color: #fff;
   border: none;
   border-radius: 0.375rem;
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
 .btn-danger:hover {
-  background: #c53030;
+  opacity: 0.9;
 }
