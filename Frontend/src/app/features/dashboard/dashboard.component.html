@@ -17,9 +17,7 @@
       <p class="greeting-sub">Here's a quick look at your shipments.</p>
     </div>
     <a routerLink="/shipments/new" class="btn-accent">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
+      <i class="fa-solid fa-plus"></i>
       New Shipment
     </a>
   </div>
@@ -28,11 +26,7 @@
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-icon kpi-blue">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
-        </svg>
+        <i class="fa-solid fa-box"></i>
       </div>
       <div>
         <div class="kpi-value">{{ totalShipments }}</div>
@@ -42,10 +36,7 @@
 
     <div class="kpi-card">
       <div class="kpi-icon kpi-orange">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-        </svg>
+        <i class="fa-solid fa-truck-fast"></i>
       </div>
       <div>
         <div class="kpi-value">{{ inTransitCount }}</div>
@@ -55,9 +46,7 @@
 
     <div class="kpi-card">
       <div class="kpi-icon kpi-green">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <i class="fa-solid fa-circle-check"></i>
       </div>
       <div>
         <div class="kpi-value">{{ deliveredCount }}</div>
@@ -67,9 +56,7 @@
 
     <div class="kpi-card">
       <div class="kpi-icon kpi-red">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
+        <i class="fa-solid fa-circle-exclamation"></i>
       </div>
       <div>
         <div class="kpi-value">{{ delayedCount }}</div>
@@ -82,9 +69,7 @@
   <div class="track-card">
     <div class="track-card-inner">
       <div class="track-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-        </svg>
+        <i class="fa-solid fa-location-dot"></i>
       </div>
       <div class="track-text">
         <h3>Track a Shipment</h3>
@@ -98,34 +83,25 @@
   <div class="quick-actions">
     <a routerLink="/shipments/new" class="qa-card">
       <div class="qa-icon qa-indigo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
+        <i class="fa-solid fa-circle-plus"></i>
       </div>
       <span>Create Shipment</span>
     </a>
     <a routerLink="/shipments" class="qa-card">
       <div class="qa-icon qa-blue">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-        </svg>
+        <i class="fa-solid fa-boxes-stacked"></i>
       </div>
       <span>My Shipments</span>
     </a>
     <a routerLink="/tracking" class="qa-card">
       <div class="qa-icon qa-green">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-        </svg>
+        <i class="fa-solid fa-location-dot"></i>
       </div>
       <span>Track</span>
     </a>
     <a routerLink="/documents" class="qa-card">
       <div class="qa-icon qa-purple">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-        </svg>
+        <i class="fa-solid fa-file-lines"></i>
       </div>
       <span>Documents</span>
     </a>
@@ -140,10 +116,7 @@
 
     <!-- Empty state -->
     <div class="empty-state" *ngIf="recentShipments.length === 0">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
-        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-      </svg>
+      <i class="fa-solid fa-box-open empty-state-icon"></i>
       <p>No shipments yet.</p>
       <a routerLink="/shipments/new" class="btn-accent-sm">Create your first shipment</a>
     </div>

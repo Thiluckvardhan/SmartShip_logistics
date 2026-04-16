@@ -6,6 +6,7 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { SpinnerComponent } from './shared/components/spinner/spinner.component';
 import { NotificationComponent } from './shared/components/notification/notification.component';
 
+
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/track', '/admin', '/dashboard', '/shipments', '/tracking', '/documents', '/profile'];
 
 @Component({
@@ -26,5 +27,5 @@ export class AppComponent {
       const nav = e as NavigationEnd;
       this.isAuthPage = AUTH_ROUTES.some(r => nav.urlAfterRedirects.startsWith(r));
     });
-  }
+  };
 }
